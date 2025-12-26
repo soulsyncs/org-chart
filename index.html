@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>組織図管理システム - 株式会社ソウルシンクス</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        /* Soul Syncs カスタムスタイル */
+        :root {
+            --soul-red: #E74C3C;
+            --soul-dark-red: #C0392B;
+            --soul-black: #1a1a1a;
+            --soul-dark-gray: #2c3e50;
+            --soul-light-gray: #ecf0f1;
+            --soul-white: #ffffff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            background: #f9fafb;
+            overflow-x: hidden;
+        }
+        
+        .org-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+        
+        @media (max-width: 640px) {
+            .org-chart {
+                padding: 1rem 0.5rem;
+            }
+        }
+        
+        /* ================================ */
+        /* カード表示用スタイル（超コンパクト版） */
+        /* ================================ */
+        .card-dept-section {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .card-dept-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            margin-bottom: 0.375rem;
+            border-left: 3px solid var(--soul-red);
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+        
+        .card-dept-title {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        
+        .card-dept-title h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+        }
+        
+        .card-dept-count {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        
+        .card-dept-buttons {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .btn-icon-sm {
+            padding: 0.25rem;
+            border-radius: 3px;
+            background: white;
+            color: #9ca3af;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.625rem;
+        }
+        
+        .btn-icon-sm:hover {
+            background: #e5e7eb;
+            color: #1a1a1a;
+        }
+        
+        .btn-icon-sm.btn-icon-danger:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .card-employee-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+        }
+        
+        .card-children-container {
+            margin-left: 0.75rem;
+            margin-top: 0.75rem;
+            padding-left: 0.75rem;
+            border-left: 2px solid #e5e7eb;
+        }
+        
+        @media (max-width: 640px) {
+            .card-dept-section {
+                margin: 0.75rem 0;
+                padding: 0.5rem;
+            }
+            
+            .card-employee-grid {
+                gap: 0.25rem;
+            }
+            
+            .card-children-container {
+                margin-left: 0.375rem;
+                padding-left: 0.375rem;
+            }
+        }
+        
+        /* ================================ */
+        /* ツリー表示用スタイル（コンパクト） */
+        /* ================================ */
+        .tree-view-container {
+            padding: 0.5rem;
+            overflow-x: auto;
+        }
+        
+        .tree-compact {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: fit-content;
+        }
+        
+        .tree-node-compact {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .tree-dept-box-compact {
+            background: white;
+            border: 2px solid var(--soul-red);
+            border-radius: 15px;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .tree-dept-box-compact:hover {
+            background: var(--soul-red);
+            color: white;
+        }
+        
+        .tree-emp-list-compact {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            justify-content: center;
+            margin: 0.25rem 0;
+            padding: 0.25rem 0;
+            position: relative;
+            max-width: 200px;
+        }
+        
+        .tree-emp-list-compact::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 0.25rem;
+            background: #d1d5db;
+        }
+        
+        .tree-emp-item-compact {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 3px;
+            padding: 0.125rem 0.375rem;
+            font-size: 0.6875rem;
+            color: #374151;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .tree-emp-item-compact:hover {
+            background: #fef2f2;
+            border-color: var(--soul-red);
+        }
+        
+        .tree-children-compact {
+            display: flex;
+            flex-direction: row;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            position: relative;
+            justify-content: center;
+        }
+        
+        .tree-children-compact::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 0.5rem;
+            background: #d1d5db;
+        }
+        
+        .tree-children-compact::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 15%;
+            right: 15%;
+            height: 1px;
+            background: #d1d5db;
+        }
+        
+        @media (max-width: 768px) {
+            .tree-children-compact {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: center;
+            }
+            
+            .tree-dept-box-compact {
+                font-size: 0.6875rem;
+                padding: 0.1875rem 0.5rem;
+            }
+            
+            .tree-emp-item-compact {
+                font-size: 0.625rem;
+                padding: 0.125rem 0.25rem;
+            }
+            
+            .tree-emp-list-compact {
+                max-width: 150px;
+            }
+        }
+        
+        .org-node {
+            position: relative;
+            text-align: center;
+            margin: 1rem;
+        }
+        
+        .org-card {
+            background: white;
+            color: #1a1a1a;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 2px solid #e5e7eb;
+            min-width: 200px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .org-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(231, 76, 60, 0.2);
+            border-color: var(--soul-red);
+        }
+        
+        .org-card.ceo {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+            border: 3px solid var(--soul-red);
+            color: #1a1a1a;
+        }
+        
+        .org-card.manager {
+            background: white;
+            border: 2px solid var(--soul-red);
+            color: #1a1a1a;
+        }
+        
+        .org-card.staff {
+            background: white;
+            border: 2px solid #e5e7eb;
+            color: #1a1a1a;
+        }
+        
+
+        
+
+        
+
+        
+        /* ================================ */
+        /* 超コンパクト社員ミニカード */
+        /* ================================ */
+        .employee-card-mini {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            position: relative;
+        }
+        
+        .employee-card-mini:hover {
+            background: #fef2f2;
+            border-color: var(--soul-red);
+            transform: translateY(-1px);
+        }
+        
+        .mini-card-marker {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .mini-card-name {
+            font-weight: 600;
+            color: #1a1a1a;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+        
+        .mini-card-name:hover {
+            color: var(--soul-red);
+            text-decoration: underline;
+        }
+        
+        .mini-card-pos {
+            color: #6b7280;
+            font-size: 0.6875rem;
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .mini-card-tag {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 0.625rem;
+            padding: 0 0.25rem;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        
+        .mini-card-actions {
+            display: none;
+            gap: 0.125rem;
+            margin-left: auto;
+            padding-left: 0.25rem;
+        }
+        
+        .employee-card-mini:hover .mini-card-actions {
+            display: flex;
+        }
+        
+        .mini-card-btn {
+            padding: 0.125rem 0.25rem;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.625rem;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mini-card-btn-edit {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .mini-card-btn-edit:hover {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .mini-card-btn-delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .mini-card-btn-delete:hover {
+            background: #ef4444;
+            color: white;
+        }
+        
+        @media (max-width: 640px) {
+            .employee-card-mini {
+                padding: 0.1875rem 0.375rem;
+                font-size: 0.6875rem;
+            }
+            
+            .mini-card-name {
+                max-width: 60px;
+            }
+            
+            .mini-card-pos {
+                font-size: 0.625rem;
+                max-width: 50px;
+            }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.confirm-modal {
+            z-index: 2000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 640px) {
+            .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--soul-red) 0%, var(--soul-dark-red) 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(231, 76, 60, 0.4);
+        }
+        
+        .btn-success {
+            background: white;
+            color: #1a1a1a;
+            border: 2px solid var(--soul-red);
+        }
+        
+        .btn-success:hover {
+            background: var(--soul-red);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(231, 76, 60, 0.3);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+            color: white;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #334155;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--soul-red);
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+        }
+        
+        .history-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--soul-red);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .badge-employee {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-contractor {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-part {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .avatar-preview {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--soul-red);
+        }
+        
+        .dragging {
+            opacity: 0.5;
+        }
+        
+        .drag-over {
+            background-color: #ffe8e6 !important;
+            border: 2px dashed var(--soul-red) !important;
+        }
+        
+        /* 通知内のボタンスタイル */
+        .notification-btn {
+            display: block;
+            width: 100%;
+            padding: 0.5rem 1rem;
+            margin-top: 0.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid white;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .notification-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+                padding: 1.5rem;
+                max-height: 90vh;
+            }
+            
+            h1, h2 {
+                font-size: 1.25rem !important;
+            }
+            
+            .form-group label {
+                font-size: 0.875rem;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 0.5rem;
+                font-size: 0.875rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+            
+            header {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+            
+            body {
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+        }
+        
+        /* 超小型スマホ対応 (320px-375px) */
+        @media (max-width: 375px) {
+            .employee-card-mini {
+                padding: 0.125rem 0.25rem;
+                font-size: 0.625rem;
+            }
+            
+            .mini-card-name {
+                max-width: 50px;
+            }
+            
+            .mini-card-pos {
+                display: none;
+            }
+            
+            .org-chart {
+                padding: 0.5rem 0.25rem;
+            }
+            
+            .tree-dept-box-compact {
+                font-size: 0.75rem;
+                padding: 0.25rem 0.5rem;
+            }
+        }
+        
+        /* 全体の横スクロール防止 */
+        * {
+            box-sizing: border-box;
+        }
+        
+        #organizationChart {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .main-content {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        @media print {
+            header, .action-buttons, button {
+                display: none !important;
+            }
+        }
+        
+        /* ================================ */
+        /* ドラッグ&ドロップ用スタイル */
+        /* ================================ */
+        .tree-emp-item-compact[draggable="true"] {
+            cursor: move;
+            user-select: none;
+        }
+        
+        .tree-emp-item-compact.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        
+        .tree-dept-box-compact.drag-over {
+            background-color: #dbeafe !important;
+            border: 2px dashed #3b82f6 !important;
+            transform: scale(1.05);
+            transition: all 0.2s ease;
+        }
+        
+        .tree-emp-item-compact:hover {
+            background-color: #f3f4f6;
+            transition: background-color 0.2s ease;
+        }
+    </style>
+</head>
+<body style="min-height: 100vh; overflow-x: hidden; background: #f9fafb;">
+    <!-- ヘッダー -->
+    <header style="background: white; border-bottom: 4px solid #E74C3C;" class="shadow-lg">
+        <div class="container mx-auto px-4 py-4 lg:py-6">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3 lg:gap-4">
+                    <!-- Soul Sync's Logo（画像） -->
+                    <img src="images/soul-syncs-logo.png" alt="Soul Sync's" style="height: 20px; width: auto;" class="flex-shrink-0">
+                    <div class="text-center lg:text-left">
+                        <h1 class="text-xl lg:text-3xl font-bold" style="font-family: 'Segoe UI', serif; letter-spacing: 0.5px; color: #1a1a1a;">組織図管理システム</h1>
+                    </div>
+                </div>
+                <div class="flex gap-2 lg:gap-3 flex-wrap justify-center">
+                    <button onclick="showHistory()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
+                        <i class="fas fa-history mr-1 lg:mr-2"></i><span class="hidden sm:inline">変更履歴</span><span class="sm:hidden">履歴</span>
+                    </button>
+                    <button onclick="exportData()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
+                        <i class="fas fa-download mr-1 lg:mr-2"></i><span class="hidden md:inline">エクスポート</span><span class="md:hidden">出力</span>
+                    </button>
+                    <button onclick="showImportModal()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
+                        <i class="fas fa-upload mr-1 lg:mr-2"></i><span class="hidden md:inline">インポート</span><span class="md:hidden">登録</span>
+                    </button>
+                    <button onclick="printToPDF()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
+                        <i class="fas fa-print mr-1 lg:mr-2"></i><span class="hidden sm:inline">PDF</span>
+                    </button>
+                    <button onclick="showStatisticsModal()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
+                        <i class="fas fa-chart-bar mr-1 lg:mr-2"></i><span class="hidden sm:inline">統計</span>
+                    </button>
+                    <button onclick="copyViewOnlyURL()" class="btn btn-sm" style="background: #E74C3C; color: white; border: none;" title="閲覧専用URLをコピー">
+                        <i class="fas fa-link mr-1 lg:mr-2"></i><span class="hidden lg:inline">閲覧URL</span>
+                    </button>
+                    <button onclick="openModal('chatworkSettingsModal')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600" style="border: none;" title="Chatwork通知設定">
+                        <i class="fas fa-comments mr-1 lg:mr-2"></i><span class="hidden lg:inline">Chatwork</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- アクションバー -->
+        <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 mb-6 lg:mb-8 border border-gray-200">
+            <div class="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center mb-4">
+                <div class="flex flex-wrap gap-2 lg:gap-4 justify-center lg:justify-start">
+                    <button onclick="showAddEmployeeModal()" class="btn btn-primary flex-1 sm:flex-none">
+                        <i class="fas fa-user-plus mr-1 lg:mr-2"></i><span class="hidden sm:inline">社員を</span>追加
+                    </button>
+                    <button onclick="showAddDepartmentModal()" class="btn btn-success flex-1 sm:flex-none">
+                        <i class="fas fa-building mr-1 lg:mr-2"></i><span class="hidden sm:inline">部署を</span>追加
+                    </button>
+                    <button onclick="showMoveEmployeeModal()" class="btn bg-blue-500 text-white hover:bg-blue-600 flex-1 sm:flex-none">
+                        <i class="fas fa-exchange-alt mr-1 lg:mr-2"></i>異動
+                    </button>
+                    <button onclick="refreshData()" class="btn bg-gray-500 text-white hover:bg-gray-600 flex-1 sm:flex-none">
+                        <i class="fas fa-sync-alt mr-1 lg:mr-2"></i>更新
+                    </button>
+                </div>
+                
+                <!-- 表示モード切替 -->
+                <div class="flex gap-1 lg:gap-2 bg-gray-100 p-1 rounded-lg w-full lg:w-auto">
+                    <button id="viewModeCard" onclick="setViewMode('card')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-white font-semibold transition text-sm lg:text-base" style="background: #E74C3C;">
+                        <i class="fas fa-id-card mr-1 lg:mr-2"></i><span class="hidden sm:inline">カード</span>
+                    </button>
+                    <button id="viewModeTree" onclick="setViewMode('tree')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-gray-700 hover:bg-gray-200 transition text-sm lg:text-base">
+                        <i class="fas fa-sitemap mr-1 lg:mr-2"></i><span class="hidden sm:inline">ツリー</span>
+                    </button>
+                    <button id="viewModeList" onclick="setViewMode('list')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-gray-700 hover:bg-gray-200 transition text-sm lg:text-base">
+                        <i class="fas fa-list mr-1 lg:mr-2"></i><span class="hidden sm:inline">リスト</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 検索バー -->
+            <div class="mt-4">
+                <input type="text" id="searchInput" placeholder="社員名・部署名で検索..." 
+                       class="w-full px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base border-2 border-gray-300 rounded-lg focus:outline-none"
+                       style="border-color: var(--soul-red); box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);"
+                       onkeyup="filterOrganization()">
+            </div>
+            
+            <!-- フィルターバー -->
+            <div class="mt-4 p-3 lg:p-4 bg-gray-50 rounded-lg">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-gray-700 text-sm lg:text-base">
+                        <i class="fas fa-filter mr-2"></i>フィルター
+                    </h3>
+                    <button onclick="clearFilters()" class="text-xs lg:text-sm hover:underline" style="color: #E74C3C;">
+                        <i class="fas fa-undo mr-1"></i>クリア
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                    <!-- 部署フィルター -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">部署</label>
+                        <select id="filterDepartment" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                            <option value="">すべて</option>
+                        </select>
+                    </div>
+                    <!-- 雇用形態フィルター -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">雇用形態</label>
+                        <select id="filterEmploymentType" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                            <option value="">すべて</option>
+                            <option value="社員">社員</option>
+                            <option value="業務委託">業務委託</option>
+                            <option value="パート">パート</option>
+                        </select>
+                    </div>
+                    <!-- スキルフィルター -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">スキル</label>
+                        <select id="filterSkill" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                            <option value="">すべて</option>
+                            <option value="営業">営業</option>
+                            <option value="マーケティング">マーケティング</option>
+                            <option value="企画">企画</option>
+                            <option value="広報・PR">広報・PR</option>
+                            <option value="人事">人事</option>
+                            <option value="総務">総務</option>
+                            <option value="経理・財務">経理・財務</option>
+                            <option value="法務">法務</option>
+                            <option value="デザイン">デザイン</option>
+                            <option value="プログラミング">プログラミング</option>
+                            <option value="データ分析">データ分析</option>
+                        </select>
+                    </div>
+                    <!-- 在籍状況フィルター -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">在籍状況</label>
+                        <select id="filterActiveStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                            <option value="active">在籍中のみ</option>
+                            <option value="all">すべて</option>
+                            <option value="inactive">退職者のみ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 統計情報 -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6 lg:mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs lg:text-sm">総従業員数</p>
+                        <p class="text-2xl lg:text-3xl font-bold" style="color: var(--soul-red);" id="totalEmployees">0</p>
+                    </div>
+                    <i class="fas fa-users text-2xl lg:text-4xl opacity-30" style="color: var(--soul-red);"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs lg:text-sm">社員</p>
+                        <p class="text-2xl lg:text-3xl font-bold" style="color: var(--soul-black);" id="regularEmployees">0</p>
+                    </div>
+                    <i class="fas fa-user-tie text-2xl lg:text-4xl opacity-30" style="color: var(--soul-black);"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs lg:text-sm">業務委託</p>
+                        <p class="text-2xl lg:text-3xl font-bold" style="color: #f39c12;" id="contractors">0</p>
+                    </div>
+                    <i class="fas fa-handshake text-2xl lg:text-4xl opacity-30" style="color: #f39c12;"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-xs lg:text-sm">部署数</p>
+                        <p class="text-2xl lg:text-3xl font-bold" style="color: var(--soul-dark-gray);" id="totalDepartments">0</p>
+                    </div>
+                    <i class="fas fa-building text-2xl lg:text-4xl opacity-30" style="color: var(--soul-dark-gray);"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 組織図表示エリア -->
+        <div id="organizationChart" class="bg-white rounded-lg shadow-sm p-4 lg:p-8 border border-gray-200">
+            <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-4 lg:mb-6">組織図</h2>
+            <div id="chartContainer"></div>
+        </div>
+    </main>
+
+    <!-- 社員追加モーダル -->
+    <div id="addEmployeeModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">社員を追加</h2>
+                <button onclick="closeModal('addEmployeeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addEmployeeForm" onsubmit="addEmployee(event)">
+                <div class="form-group">
+                    <label>氏名 *</label>
+                    <input type="text" id="empName" required>
+                </div>
+                <div class="form-group">
+                    <label>主所属部署 *</label>
+                    <select id="empDepartment" required></select>
+                </div>
+                <div class="form-group">
+                    <label>主役職</label>
+                    <input type="text" id="empPosition">
+                </div>
+                
+                <!-- 兼務部署 -->
+                <div class="form-group">
+                    <label>兼務部署</label>
+                    <div id="additionalDepartments"></div>
+                    <button type="button" onclick="addDepartmentField()" class="btn bg-blue-500 text-white mt-2">
+                        <i class="fas fa-plus mr-2"></i>部署を追加
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label>会社メールアドレス</label>
+                    <input type="email" id="empEmailCompany" placeholder="example@soulsync.co.jp">
+                </div>
+                <div class="form-group">
+                    <label>Gmailアカウント</label>
+                    <input type="email" id="empEmailGmail" placeholder="example@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>共有先メールアドレス</label>
+                    <input type="email" id="empEmailShared" placeholder="shared@example.com">
+                </div>
+                <div class="form-group">
+                    <label>電話番号</label>
+                    <input type="tel" id="empPhone">
+                </div>
+                <div class="form-group">
+                    <label>誕生日</label>
+                    <input type="date" id="empBirthday">
+                </div>
+                <div class="form-group">
+                    <label>プロフィールページURL（Canva等）</label>
+                    <input type="url" id="empProfileUrl" placeholder="https://...">
+                </div>
+                
+                <!-- 雇用情報 -->
+                <div class="form-group">
+                    <label>雇用形態 *</label>
+                    <select id="empType" required>
+                        <option value="社員">社員</option>
+                        <option value="業務委託">業務委託</option>
+                        <option value="パート">パート</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>入社日</label>
+                    <input type="date" id="empHireDate">
+                </div>
+                <div class="form-group">
+                    <label>退社日</label>
+                    <input type="date" id="empResignationDate">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="empIsActive" checked class="mr-2">
+                        在籍中
+                    </label>
+                </div>
+                
+                <!-- スキル・資格 -->
+                <div class="form-group">
+                    <label>スキル（複数選択可）</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2" id="empSkillsCheckboxes">
+                        <label class="flex items-center"><input type="checkbox" value="営業" class="mr-2">営業</label>
+                        <label class="flex items-center"><input type="checkbox" value="マーケティング" class="mr-2">マーケティング</label>
+                        <label class="flex items-center"><input type="checkbox" value="企画" class="mr-2">企画</label>
+                        <label class="flex items-center"><input type="checkbox" value="広報・PR" class="mr-2">広報・PR</label>
+                        <label class="flex items-center"><input type="checkbox" value="人事" class="mr-2">人事</label>
+                        <label class="flex items-center"><input type="checkbox" value="総務" class="mr-2">総務</label>
+                        <label class="flex items-center"><input type="checkbox" value="経理・財務" class="mr-2">経理・財務</label>
+                        <label class="flex items-center"><input type="checkbox" value="法務" class="mr-2">法務</label>
+                        <label class="flex items-center"><input type="checkbox" value="デザイン" class="mr-2">デザイン</label>
+                        <label class="flex items-center"><input type="checkbox" value="プログラミング" class="mr-2">プログラミング</label>
+                        <label class="flex items-center"><input type="checkbox" value="Webデザイン" class="mr-2">Webデザイン</label>
+                        <label class="flex items-center"><input type="checkbox" value="動画編集" class="mr-2">動画編集</label>
+                        <label class="flex items-center"><input type="checkbox" value="SNS運用" class="mr-2">SNS運用</label>
+                        <label class="flex items-center"><input type="checkbox" value="ライティング" class="mr-2">ライティング</label>
+                        <label class="flex items-center"><input type="checkbox" value="データ分析" class="mr-2">データ分析</label>
+                        <label class="flex items-center"><input type="checkbox" value="プロジェクト管理" class="mr-2">プロジェクト管理</label>
+                        <label class="flex items-center"><input type="checkbox" value="カスタマーサポート" class="mr-2">カスタマーサポート</label>
+                        <label class="flex items-center"><input type="checkbox" value="採用" class="mr-2">採用</label>
+                        <label class="flex items-center"><input type="checkbox" value="教育研修" class="mr-2">教育研修</label>
+                        <label class="flex items-center"><input type="checkbox" value="コンサルティング" class="mr-2">コンサルティング</label>
+                        <label class="flex items-center">
+                            <input type="checkbox" value="その他" class="mr-2" onchange="toggleOtherSkill(this, 'empSkillsOther')">その他
+                        </label>
+                    </div>
+                    <input type="text" id="empSkillsOther" placeholder="その他のスキルを入力" class="w-full mt-2" style="display:none;">
+                </div>
+                <div class="form-group">
+                    <label>資格（カンマ区切り）</label>
+                    <input type="text" id="empCertifications" placeholder="宅建士, TOEIC800">
+                    <p class="text-xs text-gray-500 mt-1">例: 宅建士, TOEIC800</p>
+                </div>
+                
+                <!-- 評価・目標 -->
+                <div class="form-group">
+                    <label>評価ランク</label>
+                    <select id="empEvaluation">
+                        <option value="-">未評価</option>
+                        <option value="S">S（最優秀）</option>
+                        <option value="A">A（優秀）</option>
+                        <option value="B">B（標準）</option>
+                        <option value="C">C（要改善）</option>
+                        <option value="D">D（不可）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>目標達成率（%）</label>
+                    <input type="number" id="empGoalAchievement" min="0" max="200" placeholder="100">
+                </div>
+                
+                <!-- 備考 -->
+                <div class="form-group">
+                    <label>備考・メモ</label>
+                    <textarea id="empNotes" rows="3" placeholder="特記事項があれば記入"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>写真をアップロード</label>
+                    <input type="file" id="empAvatar" accept="image/*" onchange="previewAvatar(event, 'avatarPreview')">
+                    <div id="avatarPreview" class="mt-2"></div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-check mr-2"></i>追加
+                    </button>
+                    <button type="button" onclick="closeModal('addEmployeeModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                        キャンセル
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 部署追加モーダル -->
+    <div id="addDepartmentModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">部署を追加</h2>
+                <button onclick="closeModal('addDepartmentModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addDepartmentForm" onsubmit="addDepartment(event)">
+                <div class="form-group">
+                    <label>部署名 *</label>
+                    <input type="text" id="deptName" required>
+                </div>
+                <div class="form-group">
+                    <label>親部署</label>
+                    <select id="deptParent">
+                        <option value="">なし（トップレベル）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>説明</label>
+                    <textarea id="deptDescription" rows="3"></textarea>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn btn-success flex-1">
+                        <i class="fas fa-check mr-2"></i>追加
+                    </button>
+                    <button type="button" onclick="closeModal('addDepartmentModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                        キャンセル
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 社員異動モーダル -->
+    <div id="moveEmployeeModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">社員を異動</h2>
+                <button onclick="closeModal('moveEmployeeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="moveEmployeeForm" onsubmit="moveEmployee(event)">
+                <div class="form-group">
+                    <label>社員を選択 *</label>
+                    <select id="moveEmpId" required></select>
+                </div>
+                <div class="form-group">
+                    <label>異動先部署 *</label>
+                    <select id="moveEmpDepartment" required></select>
+                </div>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        異動前の確認画面が表示されます
+                    </p>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn bg-blue-500 text-white flex-1">
+                        <i class="fas fa-exchange-alt mr-2"></i>異動
+                    </button>
+                    <button type="button" onclick="closeModal('moveEmployeeModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                        キャンセル
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 変更履歴モーダル -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">変更履歴</h2>
+                <button onclick="closeModal('historyModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="historyContent" class="max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- 確認モーダル -->
+    <!-- 確認モーダル（重複削除） -->
+
+    <!-- 社員編集モーダル -->
+    <div id="editEmployeeModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">社員情報を編集</h2>
+                <button onclick="closeModal('editEmployeeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editEmployeeForm" onsubmit="updateEmployee(event)">
+                <input type="hidden" id="editEmpId">
+                <div class="form-group">
+                    <label>氏名 *</label>
+                    <input type="text" id="editEmpName" required>
+                </div>
+                <div class="form-group">
+                    <label>主所属部署 *</label>
+                    <select id="editEmpDepartment" required></select>
+                </div>
+                <div class="form-group">
+                    <label>主役職</label>
+                    <input type="text" id="editEmpPosition">
+                </div>
+                
+                <!-- 兼務部署 -->
+                <div class="form-group">
+                    <label>兼務部署</label>
+                    <div id="editAdditionalDepartments"></div>
+                    <button type="button" onclick="addEditDepartmentField()" class="btn bg-blue-500 text-white mt-2">
+                        <i class="fas fa-plus mr-2"></i>部署を追加
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label>会社メールアドレス</label>
+                    <input type="email" id="editEmpEmailCompany" placeholder="example@soulsync.co.jp">
+                </div>
+                <div class="form-group">
+                    <label>Gmailアカウント</label>
+                    <input type="email" id="editEmpEmailGmail" placeholder="example@gmail.com">
+                </div>
+                <div class="form-group">
+                    <label>共有先メールアドレス</label>
+                    <input type="email" id="editEmpEmailShared" placeholder="shared@example.com">
+                </div>
+                <div class="form-group">
+                    <label>電話番号</label>
+                    <input type="tel" id="editEmpPhone">
+                </div>
+                <div class="form-group">
+                    <label>誕生日</label>
+                    <input type="date" id="editEmpBirthday">
+                </div>
+                <div class="form-group">
+                    <label>プロフィールページURL（Canva等）</label>
+                    <input type="url" id="editEmpProfileUrl" placeholder="https://...">
+                </div>
+                <!-- 雇用情報 -->
+                <div class="form-group">
+                    <label>雇用形態 *</label>
+                    <select id="editEmpType" required>
+                        <option value="社員">社員</option>
+                        <option value="業務委託">業務委託</option>
+                        <option value="パート">パート</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>入社日</label>
+                    <input type="date" id="editEmpHireDate">
+                </div>
+                <div class="form-group">
+                    <label>退社日</label>
+                    <input type="date" id="editEmpResignationDate">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="editEmpIsActive" class="mr-2">
+                        在籍中
+                    </label>
+                </div>
+                
+                <!-- スキル・資格 -->
+                <div class="form-group">
+                    <label>スキル（複数選択可）</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 mb-2" id="editEmpSkillsCheckboxes">
+                        <label class="flex items-center"><input type="checkbox" value="営業" class="mr-2">営業</label>
+                        <label class="flex items-center"><input type="checkbox" value="マーケティング" class="mr-2">マーケティング</label>
+                        <label class="flex items-center"><input type="checkbox" value="企画" class="mr-2">企画</label>
+                        <label class="flex items-center"><input type="checkbox" value="広報・PR" class="mr-2">広報・PR</label>
+                        <label class="flex items-center"><input type="checkbox" value="人事" class="mr-2">人事</label>
+                        <label class="flex items-center"><input type="checkbox" value="総務" class="mr-2">総務</label>
+                        <label class="flex items-center"><input type="checkbox" value="経理・財務" class="mr-2">経理・財務</label>
+                        <label class="flex items-center"><input type="checkbox" value="法務" class="mr-2">法務</label>
+                        <label class="flex items-center"><input type="checkbox" value="デザイン" class="mr-2">デザイン</label>
+                        <label class="flex items-center"><input type="checkbox" value="プログラミング" class="mr-2">プログラミング</label>
+                        <label class="flex items-center"><input type="checkbox" value="Webデザイン" class="mr-2">Webデザイン</label>
+                        <label class="flex items-center"><input type="checkbox" value="動画編集" class="mr-2">動画編集</label>
+                        <label class="flex items-center"><input type="checkbox" value="SNS運用" class="mr-2">SNS運用</label>
+                        <label class="flex items-center"><input type="checkbox" value="ライティング" class="mr-2">ライティング</label>
+                        <label class="flex items-center"><input type="checkbox" value="データ分析" class="mr-2">データ分析</label>
+                        <label class="flex items-center"><input type="checkbox" value="プロジェクト管理" class="mr-2">プロジェクト管理</label>
+                        <label class="flex items-center"><input type="checkbox" value="カスタマーサポート" class="mr-2">カスタマーサポート</label>
+                        <label class="flex items-center"><input type="checkbox" value="採用" class="mr-2">採用</label>
+                        <label class="flex items-center"><input type="checkbox" value="教育研修" class="mr-2">教育研修</label>
+                        <label class="flex items-center"><input type="checkbox" value="コンサルティング" class="mr-2">コンサルティング</label>
+                        <label class="flex items-center">
+                            <input type="checkbox" value="その他" class="mr-2" onchange="toggleOtherSkill(this, 'editEmpSkillsOther')">その他
+                        </label>
+                    </div>
+                    <input type="text" id="editEmpSkillsOther" placeholder="その他のスキルを入力" class="w-full mt-2" style="display:none;">
+                </div>
+                <div class="form-group">
+                    <label>資格（カンマ区切り）</label>
+                    <input type="text" id="editEmpCertifications" placeholder="宅建士, TOEIC800">
+                </div>
+                
+                <!-- 評価・目標 -->
+                <div class="form-group">
+                    <label>評価ランク</label>
+                    <select id="editEmpEvaluation">
+                        <option value="-">未評価</option>
+                        <option value="S">S（最優秀）</option>
+                        <option value="A">A（優秀）</option>
+                        <option value="B">B（標準）</option>
+                        <option value="C">C（要改善）</option>
+                        <option value="D">D（不可）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>目標達成率（%）</label>
+                    <input type="number" id="editEmpGoalAchievement" min="0" max="200">
+                </div>
+                
+                <!-- 備考 -->
+                <div class="form-group">
+                    <label>備考・メモ</label>
+                    <textarea id="editEmpNotes" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>写真をアップロード</label>
+                    <input type="file" id="editEmpAvatar" accept="image/*" onchange="previewAvatar(event, 'editAvatarPreview')">
+                    <div id="editAvatarPreview" class="mt-2"></div>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-save mr-2"></i>更新
+                    </button>
+                    <button type="button" onclick="closeModal('editEmployeeModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                        キャンセル
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 部署編集モーダル -->
+    <div id="editDepartmentModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">部署情報を編集</h2>
+                <button onclick="closeModal('editDepartmentModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="editDepartmentForm" onsubmit="updateDepartment(event)">
+                <input type="hidden" id="editDeptId">
+                <div class="form-group">
+                    <label>部署名 *</label>
+                    <input type="text" id="editDeptName" required>
+                </div>
+                <div class="form-group">
+                    <label>親部署</label>
+                    <select id="editDeptParent">
+                        <option value="">なし（トップレベル）</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>説明</label>
+                    <textarea id="editDeptDescription" rows="3"></textarea>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="submit" class="btn btn-success flex-1">
+                        <i class="fas fa-save mr-2"></i>更新
+                    </button>
+                    <button type="button" onclick="closeModal('editDepartmentModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                        キャンセル
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- データインポートモーダル -->
+    <div id="importDataModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">データをインポート</h2>
+                <button onclick="closeModal('importDataModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-4">
+                    <p class="text-sm text-yellow-800">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>警告:</strong> インポートすると現在のデータに追加されます。重複には注意してください。
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label>ファイルを選択</label>
+                    <input type="file" id="importFile" accept=".json,.csv,.xlsx" class="w-full">
+                    <p class="text-sm text-gray-500 mt-2">対応形式: JSON, CSV, Excel (.xlsx)</p>
+                </div>
+                <div class="form-group">
+                    <button onclick="downloadTemplate()" class="btn bg-blue-500 text-white w-full">
+                        <i class="fas fa-download mr-2"></i>CSVテンプレートをダウンロード
+                    </button>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="importData()" class="btn btn-primary flex-1">
+                    <i class="fas fa-upload mr-2"></i>インポート
+                </button>
+                <button onclick="closeModal('importDataModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                    キャンセル
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 統計モーダル -->
+    <div id="statisticsModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-chart-bar mr-2"></i>組織統計
+                </h2>
+                <button onclick="closeModal('statisticsModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="statisticsContent">
+                <!-- 統計情報がここに表示されます -->
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="closeModal('statisticsModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- データインポートモーダル -->
+    <div id="importDataModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-file-import mr-2"></i>データインポート
+                </h2>
+                <button onclick="closeModal('importDataModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <p class="text-gray-700 font-semibold mb-2">対応ファイル形式：</p>
+                <ul class="list-disc list-inside text-sm text-gray-600 mb-3">
+                    <li>CSV形式（.csv）- 推奨</li>
+                    <li>JSON形式（.json）</li>
+                </ul>
+                
+                <button onclick="downloadTemplate()" class="btn btn-sm bg-blue-500 text-white mb-3">
+                    <i class="fas fa-download mr-2"></i>CSVテンプレートをダウンロード
+                </button>
+                
+                <p class="text-sm text-gray-600 mb-2">
+                    <strong>CSVフォーマット例：</strong>
+                </p>
+                <div class="bg-gray-100 p-3 rounded text-xs overflow-x-auto mb-4">
+                    <code>氏名,主所属部署ID,主役職,雇用形態,会社メール,Gmail,電話番号,誕生日,入社日<br>
+山田太郎,dept-001,マネージャー,社員,<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f089919d919491b0939f9d80919e89de939f9d">[email&#160;protected]</a>,<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f9809894989d98b99e94989095d79a9694">[email&#160;protected]</a>,090-1234-5678,1990-05-15,2020-04-01</code>
+                </div>
+                <p class="text-yellow-600 text-sm mb-4">
+                    ⚠️ 既存データに追加されます。重複がないか確認してください。
+                </p>
+            </div>
+            <input type="file" id="importFile" accept=".csv,.xlsx,.xls,.json" class="mb-4" onchange="previewImportFile()">
+            <div id="importPreview" class="mb-4 p-3 bg-blue-50 rounded" style="display:none;">
+                <p class="text-sm font-semibold text-blue-800 mb-2">プレビュー：</p>
+                <div id="importPreviewContent" class="text-sm text-gray-700 max-h-60 overflow-y-auto"></div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="importData()" class="btn btn-primary flex-1">
+                    <i class="fas fa-upload mr-2"></i>インポート実行
+                </button>
+                <button onclick="closeModal('importDataModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                    キャンセル
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 社員詳細モーダル -->
+    <div id="employeeDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">社員詳細</h2>
+                <button onclick="closeModal('employeeDetailModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="employeeDetailContent" class="mb-6">
+                <!-- 社員詳細がここに表示されます（編集・削除ボタンはJavaScriptで生成） -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatwork設定モーダル -->
+    <div id="chatworkSettingsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-comments mr-2 text-green-600"></i>Chatwork通知設定
+                </h2>
+                <button onclick="closeModal('chatworkSettingsModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mb-6">
+                <p class="text-sm text-gray-600 mb-4">
+                    社員の追加・異動時にChatworkで通知を送信できます。<br>
+                    <strong>注意：</strong> Chatwork APIトークンとルームIDが必要です。
+                </p>
+                <div class="form-group">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="chatworkEnabled" onchange="toggleChatworkSettings()">
+                        <span class="font-semibold">Chatwork通知を有効化</span>
+                    </label>
+                </div>
+                <div id="chatworkSettingsFields" style="display:none;" class="mt-4">
+                    <div class="form-group">
+                        <label>APIトークン *</label>
+                        <input type="password" id="chatworkApiToken" placeholder="Chatwork APIトークンを入力">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <a href="https://www.chatwork.com/service/packages/chatwork/subpackages/api/token.php" target="_blank" class="text-blue-600 hover:underline">
+                                <i class="fas fa-external-link-alt mr-1"></i>APIトークンを取得
+                            </a>
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>ルームID *</label>
+                        <input type="text" id="chatworkRoomId" placeholder="123456789">
+                        <p class="text-xs text-gray-500 mt-1">ChatworkのルームURLの数字部分</p>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg text-sm text-blue-800 mt-4">
+                        <p class="font-semibold mb-2">⚠️ 重要な注意事項：</p>
+                        <p>この機能は静的Webアプリのため、ブラウザから直接Chatwork APIを呼び出します。<br>
+                        セキュリティの観点から、APIトークンはブラウザのローカルストレージに保存されます。<br>
+                        本番環境では、バックエンドサーバーを経由することを推奨します。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveChatworkSettings()" class="btn btn-primary flex-1">
+                    <i class="fas fa-save mr-2"></i>保存
+                </button>
+                <button onclick="closeModal('chatworkSettingsModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                    キャンセル
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 確認モーダル -->
+    <div id="confirmModal" class="modal confirm-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">確認</h2>
+                <button onclick="closeModal('confirmModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="confirmContent" class="mb-6">
+                <!-- 確認メッセージがここに表示されます -->
+            </div>
+            <div class="flex gap-3">
+                <button id="confirmYes" class="btn btn-primary flex-1">
+                    <i class="fas fa-check mr-2"></i>はい
+                </button>
+                <button id="confirmNo" onclick="closeModal('confirmModal')" class="btn bg-gray-300 text-gray-700 flex-1">
+                    <i class="fas fa-times mr-2"></i>いいえ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
