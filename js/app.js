@@ -2,6 +2,7 @@
 let departments = [];
 let employees = [];
 let changeHistory = [];
+let roles = [];
 let currentViewMode = 'card'; // デフォルトはカード表示
 
 // 権限管理
@@ -98,6 +99,16 @@ async function loadData() {
         const deptData = await deptResponse.json();
         departments = deptData || [];
 
+        // 役職データの読み込み
+        const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?limit=100`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        const rolesData = await rolesResponse.json();
+        roles = rolesData || [];
         // 社員データの読み込み
         const empResponse = await fetch(`${SUPABASE_REST_URL}/employees?limit=200`, {
             headers: {
