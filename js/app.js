@@ -3427,7 +3427,112 @@ window.onclick = function(event) {
         event.target.style.display = 'none';
     }
 }
+// ========================================
+// ソウルくん同期機能
+// ========================================
 
+const SOULKUN_API_BASE = 'https://api.soulsyncs.jp/v1';
+
+async function syncToSoulKun() {
+    const orgChartData = JSON.parse(localStorage.getItem('soulsyncs_org_chart_v2'));
+    
+    if (!orgChartData) {
+        showNotification('組織図データがありません', 'error');
+        return;
+    }
+    
+    const apiToken = localStorage.getItem('soulsyncs_api_token');
+    if (!apiToken) {
+        showNotification('APIトークンが設定されていません。設定画面から設定してください。', 'error');
+        return;
+    }
+    
+    try {
+        showSyncLoading('同期中...');
+        
+        const response = await fetch(`${SOULKUN_API_BASE}/org-chart/sync`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`
+            },
+            body: JSON.stringify({
+                organization_id: orgChartData.organization?.id || 'org_soulsyncs',
+                source: 'org_chart_system',
+                sync_type: 'full',
+                departments: departments,
+                roles: roles,
+                employees: employees,
+                options: {
+                    include_inactive_users: false,
+                    include_archived_departments: false,
+                    dry_run: false
+                }
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            const summary = result.summary || {};
+            showNotification(
+                `同期完了！ 部署: ${summary.departments?.added || 0}追加/${summary.departments?.updated || 0}更新, ` +
+                `役職: ${summary.roles?.added || 0}追加/${summary.roles?.updated || 0}更新, ` +
+                `社員: ${summary.users?.added || 0}追加/${summary.users?.updated || 0}更新`,
+                'success'
+            );
+            
+            localStorage.setItem('soulsyncs_last_sync', new Date().toISOString());
+            updateLastSyncedText();
+        } else {
+            showNotification(`同期失敗: ${result.error?.message || '不明なエラー'}`, 'error');
+        }
+        
+    } catch (error) {
+        showNotification(`通信エラー: ${error.message}`, 'error');
+    } finally {
+        hideSyncLoading();
+    }
+}
+
+function showSyncLoading(message) {
+    const overlay = document.getElementById('loadingOverlay');
+    const msgElement = document.getElementById('loadingMessage');
+    if (overlay) overlay.style.display = 'flex';
+    if (msgElement) msgElement.textContent = message;
+}
+
+function hideSyncLoading() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function updateLastSyncedText() {
+    const lastSync = localStorage.getItem('soulsyncs_last_sync');
+    const textElement = document.getElementById('lastSyncedText');
+    if (textElement) {
+        if (lastSync) {
+            const date = new Date(lastSync);
+            textElement.textContent = `最終同期: ${date.toLocaleString('ja-JP')}`;
+        } else {
+            textElement.textContent = '未同期';
+        }
+    }
+}
+
+function saveApiToken() {
+    const tokenInput = document.getElementById('apiToken');
+    if (!tokenInput) return;
+    
+    const token = tokenInput.value.trim();
+    if (!token) {
+        showNotification('APIトークンを入力してください', 'error');
+        return;
+    }
+    
+    localStorage.setItem('soulsyncs_api_token', token);
+    showNotification('APIトークンを保存しました', 'success');
+}
 // ページ読み込み完了時の初期化（ファイル末尾に配置）
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded: JavaScript is fully loaded');
