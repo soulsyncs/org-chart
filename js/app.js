@@ -3424,40 +3424,29 @@ window.onclick = function(event) {
 const SOULKUN_API_BASE = 'https://soulkun-api-898513057014.asia-northeast1.run.app';
 
 async function syncToSoulKun() {
-    const orgChartData = JSON.parse(localStorage.getItem('soulsyncs_org_chart_v2'));
-    
-    if (!orgChartData) {
-        showNotification('組織図データがありません', 'error');
-        return;
-    }
-    
-    const apiToken = localStorage.getItem('soulsyncs_api_token');
-    if (!apiToken) {
-        showNotification('APIトークンが設定されていません。設定画面から設定してください。', 'error');
-        return;
-    }
+
     
     try {
         showSyncLoading('同期中...');
         
-        const response = await fetch(`${SOULKUN_API_BASE}/org-chart/sync`, {
+        const response = await fetch(`${SOULKUN_API_BASE}/api/v1/org-chart/sync`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiToken}`
             },
             body: JSON.stringify({
-                organization_id: orgChartData.organization?.id || 'org_soulsyncs',
-                source: 'org_chart_system',
-                sync_type: 'full',
-                departments: departments,
-                roles: roles,
-                employees: employees,
-                options: {
-                    include_inactive_users: false,
-                    include_archived_departments: false,
-                    dry_run: false
-                }
+                 organization_id: 'org_soulsyncs',
+                    source: 'org_chart_system',
+                    sync_type: 'full',
+                    departments: departments,
+                    roles: roles,
+employees: employees,
+                                    options: {
+                                                                include_inactive_users: false,
+                                                                include_archived_departments: false,
+                                                                dry_run: false
+                                    }e
+                    }dry_run: false}
             })
         });
         
