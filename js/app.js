@@ -2967,6 +2967,11 @@ function renderTreeView(container) {
     });
     
     container.appendChild(tree);
+
+        // ツリー表示時のドラッグドロップを初期化
+        setTimeout(() => {
+                    initializeTreeDragAndDrop();
+        }, 100);
 }
 
 // コンパクトなツリーノード作成
@@ -3524,6 +3529,123 @@ function saveApiToken() {
     showNotification('APIトークンを保存しました', 'success');
 }
 // ページ読み込み完了時の初期化（ファイル末尾に配置）
+
+// ============================================
+// ツリー表示でのドラッグ&ドロップ初期化
+// ============================================
+function initializeTreeDragAndDrop() {
+        // ツリー内のすべての社員要素を取得
+        const empItems = document.querySelectorAll('.tree-emp-item-compact');
+
+        empItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                                    item.classList.add('dragging');
+                                    e.dataTransfer.effectAllowed = 'move';
+                                    e.dataTransfer.setData('text/plain', item.dataset.empId);
+                    });
+
+                    item.addEventListener('dragend', () => {
+                                    item.classList.remove('dragging');
+                    });
+        });
+
+        // ドロップゾーン（社員リスト）を設定
+        const empLists = document.querySelectorAll('.tree-emp-list-compact');
+        empLists.forEach(list => {
+                    list.addEventListener('dragover', (e) => {
+                                    e.preventDefault();
+                                    e.dataTransfer.dropEffect = 'move';
+                                    list.classList.add('drag-over');
+                    });
+
+                    list.addEventListener('dragleave', () => {
+                                    list.classList.remove('drag-over');
+                    });
+
+                    list.addEventListener('drop', async (e) => {
+                                    e.preventDefault();
+                                    list.classList.remove('drag-over');
+
+                                    const employeeId = e.dataTransfer.getData('text/plain');
+                                    const deptBox = list.previousElementSibling;
+                                    const deptId = deptBox.dataset.deptId;
+
+                                    // ドロップ処理を実行
+                                    await handleTreeEmployeeReorder(employeeId, deptId, list);
+                    });
+        });
+}
+
+// ツリー表示での社員順序変更処理
+async function handleTreeEmployeeReorder(employeeId, deptId, empListElement) {
+        const employee = employees.find(e => e.id === employeeId);
+
+        // 同じ部署への移動かチェック
+        if (!employee || employee.department_id !== deptId) {
+                    return;
+        }
+
+        try {
+                    // 新しい順序を計算
+                    const empItems = empListElement.querySelectorAll('.tree-emp-item-compact');
+                    const updatePromises = [];
+
+                    empItems.forEach((item, index) => {
+                                    const empId = item.dataset.empId;
+                                    const emp = employees.find(e => e.id === empId);
+
+                                    if (emp && (emp.department_order || 0) !== index) {
+                                                        const updatedEmployee = {...emp, department_order: index};
+
+                                                        // Supabaseに更新
+                                                        const updatePromise = fetch(`${SUPABASE_REST_URL}/employees?id=eq.${empId}`, {
+                                                                                method: 'PATCH',
+                                                                                headers: {
+                                                                                                            'Content-Type': 'application/json',
+                                                                                                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                                                                                            'apikey': SUPABASE_ANON_KEY
+                                                                                    },
+                                                                                body: JSON.stringify({department_order: index})
+                                                        }).then(response => {
+                                                                                if (!response.ok) throw new Error(`Failed to update employee ${empId}`);
+                                                                                const idx = employees.findIndex(e => e.id === empId);
+                                                                                if (idx !== -1) {
+                                                                                                            employees[idx].department_order = index;
+                                                                                    }
+                                                                                return updatedEmployee;
+                                                        });
+
+                                                        updatePromises.push(updatePromise);
+                                    }
+                    });
+
+                    if (updatePromises.length === 0) return;
+
+                    await Promise.all(updatePromises);
+
+                    // 変更履歴に記録
+                    const dept = departments.find(d => d.id === deptId);
+                    const orderMap = {};
+                    empItems.forEach((item, index) => {
+                                    orderMap[item.dataset.empId] = index;
+                    });
+
+                    await addChangeHistory(
+                                    '部署内順番変更',
+                                    'employee_order',
+                                    deptId,
+                                    null,
+                                    orderMap,
+                                    `${dept.name}内の社員順番をツリー表示で変更しました（ドラッグ&ドロップ）`
+                                );
+
+                    showNotification('社員の順番を更新しました', 'success');
+        } catch (error) {
+                    console.error('順番更新エラー:', error);
+                    showNotification('順番の更新に失敗しました。ページを再読み込みしてください。', 'error');
+                    await loadData();
+        }
+}
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded: JavaScript is fully loaded');
     checkViewMode();
