@@ -99,16 +99,6 @@ async function loadData() {
         const deptData = await deptResponse.json();
         departments = deptData || [];
 
-        // 役職データの読み込み
-        const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?limit=100`, {
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'apikey': SUPABASE_ANON_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
-        const rolesData = await rolesResponse.json();
-        roles = rolesData || [];
         // 社員データの読み込み
         const empResponse = await fetch(`${SUPABASE_REST_URL}/employees?limit=200`, {
             headers: {
@@ -3431,7 +3421,7 @@ window.onclick = function(event) {
 // ソウルくん同期機能
 // ========================================
 
-const SOULKUN_API_BASE = 'https://api.soulsyncs.jp/v1';
+const SOULKUN_API_BASE = 'https://soulkun-api-898513057014.asia-northeast1.run.app';
 
 async function syncToSoulKun() {
     const orgChartData = JSON.parse(localStorage.getItem('soulsyncs_org_chart_v2'));
