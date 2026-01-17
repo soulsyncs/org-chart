@@ -3421,6 +3421,7 @@ window.onclick = function(event) {
 // ソウルくん同期機能
 // ========================================
 
+// 本番用
 const SOULKUN_API_BASE = 'https://soulkun-api-898513057014.asia-northeast1.run.app';
 
 async function syncToSoulKun() {
@@ -3509,13 +3510,15 @@ async function syncToSoulKun() {
             endDate: null
         }));
 
-        const response = await fetch(`${SOULKUN_API_BASE}/api/v1/org-chart/sync`, {
+        // テスト用固定UUID（本番では実際の組織IDを使用）
+        const orgId = '00000000-0000-0000-0000-000000000001';
+        const response = await fetch(`${SOULKUN_API_BASE}/api/v1/organizations/${orgId}/sync-org-chart`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                organization_id: 'org_soulsyncs',
+                organization_id: orgId,
                 source: 'org_chart_system',
                 sync_type: 'full',
                 departments: mappedDepartments,
