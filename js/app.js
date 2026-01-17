@@ -3427,6 +3427,88 @@ async function syncToSoulKun() {
     try {
         showSyncLoading('同期中...');
 
+        // 部署の階層レベルを計算する関数
+        function calculateDeptLevel(deptId, deptMap, cache = {}) {
+            if (cache[deptId] !== undefined) return cache[deptId];
+            const dept = deptMap[deptId];
+            if (!dept || !dept.parent_id) {
+                cache[deptId] = 1;
+                return 1;
+            }
+            cache[deptId] = calculateDeptLevel(dept.parent_id, deptMap, cache) + 1;
+            return cache[deptId];
+        }
+
+        // 部署マップを作成
+        const deptMap = {};
+        departments.forEach(d => { deptMap[d.id] = d; });
+
+        // 部署データをAPI形式にマッピング
+        const mappedDepartments = departments.map(d => ({
+            id: String(d.id),
+            name: d.name,
+            code: d.code || String(d.id),
+            parentId: d.parent_id ? String(d.parent_id) : null,
+            level: calculateDeptLevel(d.id, deptMap),
+            displayOrder: d.display_order || 1,
+            isActive: d.is_active !== false
+        }));
+
+        // 役職データを生成（employeesのpositionから一意な役職を抽出）
+        const positionSet = new Set();
+        employees.forEach(e => {
+            if (e.position) positionSet.add(e.position);
+        });
+        const positions = Array.from(positionSet);
+
+        // 役職レベルのマッピング（役職名から推定）
+        const rolelevels = {
+            'CEO': 1, '代表': 1, '社長': 1,
+            '取締役': 2, '役員': 2,
+            '本部長': 3, '事業部長': 3,
+            '部長': 4, 'GM': 4,
+            '次長': 5, '副部長': 5,
+            '課長': 6, 'マネージャー': 6,
+            '係長': 7, 'リーダー': 7, 'チームリーダー': 7,
+            '主任': 8,
+            '一般': 10, 'メンバー': 10, 'スタッフ': 10
+        };
+
+        const mappedRoles = positions.map((pos, idx) => ({
+            id: `role_${pos.replace(/\s+/g, '_').toLowerCase()}`,
+            name: pos,
+            level: rolelevels[pos] || 10,
+            description: null
+        }));
+
+        // 役職が空の場合はデフォルト役職を追加
+        if (mappedRoles.length === 0) {
+            mappedRoles.push({
+                id: 'role_member',
+                name: 'メンバー',
+                level: 10,
+                description: 'デフォルト役職'
+            });
+        }
+
+        // 役職名からroleIdを取得するマップ
+        const roleIdMap = {};
+        mappedRoles.forEach(r => {
+            roleIdMap[r.name] = r.id;
+        });
+
+        // 社員データをAPI形式にマッピング
+        const mappedEmployees = employees.map(e => ({
+            id: String(e.id),
+            name: e.name,
+            email: e.email || `${String(e.id).replace(/-/g, '')}@example.com`,
+            departmentId: String(e.department_id),
+            roleId: roleIdMap[e.position] || 'role_member',
+            isPrimary: true,
+            startDate: null,
+            endDate: null
+        }));
+
         const response = await fetch(`${SOULKUN_API_BASE}/api/v1/org-chart/sync`, {
             method: 'POST',
             headers: {
@@ -3436,9 +3518,9 @@ async function syncToSoulKun() {
                 organization_id: 'org_soulsyncs',
                 source: 'org_chart_system',
                 sync_type: 'full',
-                departments: departments,
-                roles: roles,
-                employees: employees,
+                departments: mappedDepartments,
+                roles: mappedRoles,
+                employees: mappedEmployees,
                 options: {
                     include_inactive_users: false,
                     include_archived_departments: false,
@@ -3461,11 +3543,13 @@ async function syncToSoulKun() {
             localStorage.setItem('soulsyncs_last_sync', new Date().toISOString());
             updateLastSyncedText();
         } else {
-            showNotification(`同期失敗: ${result.error?.message || '不明なエラー'}`, 'error');
+            showNotification(`同期失敗: ${result.error?.message || result.detail || '不明なエラー'}`, 'error');
+            console.error('Sync failed:', result);
         }
 
     } catch (error) {
         showNotification(`通信エラー: ${error.message}`, 'error');
+        console.error('Sync error:', error);
     } finally {
         hideSyncLoading();
     }
