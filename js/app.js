@@ -3424,34 +3424,31 @@ window.onclick = function(event) {
 const SOULKUN_API_BASE = 'https://soulkun-api-898513057014.asia-northeast1.run.app';
 
 async function syncToSoulKun() {
-
-    
     try {
         showSyncLoading('同期中...');
-        
+
         const response = await fetch(`${SOULKUN_API_BASE}/api/v1/org-chart/sync`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                 organization_id: 'org_soulsyncs',
-                    source: 'org_chart_system',
-                    sync_type: 'full',
-                    departments: departments,
-                    roles: roles,
-employees: employees,
-                                    options: {
-                                                                include_inactive_users: false,
-                                                                include_archived_departments: false,
-                                                                dry_run: false
-                                    }e
-                    }dry_run: false}
+                organization_id: 'org_soulsyncs',
+                source: 'org_chart_system',
+                sync_type: 'full',
+                departments: departments,
+                roles: roles,
+                employees: employees,
+                options: {
+                    include_inactive_users: false,
+                    include_archived_departments: false,
+                    dry_run: false
+                }
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             const summary = result.summary || {};
             showNotification(
@@ -3460,13 +3457,13 @@ employees: employees,
                 `社員: ${summary.users?.added || 0}追加/${summary.users?.updated || 0}更新`,
                 'success'
             );
-            
+
             localStorage.setItem('soulsyncs_last_sync', new Date().toISOString());
             updateLastSyncedText();
         } else {
             showNotification(`同期失敗: ${result.error?.message || '不明なエラー'}`, 'error');
         }
-        
+
     } catch (error) {
         showNotification(`通信エラー: ${error.message}`, 'error');
     } finally {
