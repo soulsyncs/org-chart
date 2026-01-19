@@ -948,9 +948,13 @@
                 </div>
                 <div class="form-group">
                     <label>主役職</label>
-                    <input type="text" id="empPosition">
+                    <select id="empRoleId">
+                        <option value="">役職を選択...</option>
+                    </select>
+                    <!-- 後方互換性: 非表示のposition入力（将来削除予定） -->
+                    <input type="hidden" id="empPosition">
                 </div>
-                
+
                 <!-- 兼務部署 -->
                 <div class="form-group">
                     <label>兼務部署</label>
@@ -1194,9 +1198,13 @@
                 </div>
                 <div class="form-group">
                     <label>主役職</label>
-                    <input type="text" id="editEmpPosition">
+                    <select id="editEmpRoleId">
+                        <option value="">役職を選択...</option>
+                    </select>
+                    <!-- 後方互換性: 非表示のposition入力（将来削除予定） -->
+                    <input type="hidden" id="editEmpPosition">
                 </div>
-                
+
                 <!-- 兼務部署 -->
                 <div class="form-group">
                     <label>兼務部署</label>

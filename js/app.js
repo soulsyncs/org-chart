@@ -121,11 +121,24 @@ async function loadData() {
         const historyData = await historyResponse.json();
         changeHistory = historyData || [];
 
+        // 役職データの読み込み（Phase 3.5対応）
+        const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?is_active=eq.true&order=display_order`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        const rolesData = await rolesResponse.json();
+        roles = rolesData || [];
+        console.log('Loaded roles:', roles.length, 'items');
+
         // UIの更新
         updateStatistics();
         renderOrganizationChart();
         populateDepartmentSelects();
         populateEmployeeSelects();
+        populateRoleSelects();
     } catch (error) {
         console.error('データの読み込みエラー:', error);
         showNotification('データの読み込みに失敗しました', 'error');
@@ -499,9 +512,9 @@ function populateDepartmentSelects() {
 function populateEmployeeSelects() {
     const select = document.getElementById('moveEmpId');
     if (!select) return;
-    
+
     select.innerHTML = '';
-    
+
     employees.forEach(emp => {
         const dept = departments.find(d => d.id === emp.department_id);
         const option = document.createElement('option');
@@ -509,6 +522,53 @@ function populateEmployeeSelects() {
         option.textContent = `${emp.name} (${dept ? dept.name : '未所属'})`;
         select.appendChild(option);
     });
+}
+
+// 役職セレクトボックスの更新（Phase 3.5対応）
+function populateRoleSelects() {
+    const selects = ['empRoleId', 'editEmpRoleId'];
+
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">役職を選択...</option>';
+
+        // rolesテーブルから読み込んだデータを使用
+        // rolesがない場合（マイグレーション前）はpositionフィールドにフォールバック
+        if (roles && roles.length > 0) {
+            roles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role.id;
+                option.textContent = `${role.name}（Level ${role.level}）`;
+                select.appendChild(option);
+            });
+        } else {
+            // フォールバック: 既存のpositionから一意な役職を抽出
+            const positionSet = new Set();
+            employees.forEach(e => {
+                if (e.position) positionSet.add(e.position);
+            });
+            Array.from(positionSet).forEach(pos => {
+                const option = document.createElement('option');
+                option.value = pos;  // rolesがない場合はposition名をそのまま使用
+                option.textContent = pos;
+                select.appendChild(option);
+            });
+        }
+
+        if (currentValue) {
+            select.value = currentValue;
+        }
+    });
+}
+
+// 役職IDから役職名を取得するヘルパー関数
+function getRoleName(roleId) {
+    if (!roleId) return '';
+    const role = roles.find(r => r.id === roleId);
+    return role ? role.name : roleId;  // 見つからない場合はIDをそのまま返す
 }
 
 // 社員追加
@@ -577,9 +637,22 @@ async function addEmployee(event) {
     
     // 主部署を含む全部署リスト
     const mainDeptId = document.getElementById('empDepartment').value;
-    const mainPosition = document.getElementById('empPosition').value;
+
+    // 役職の取得（Phase 3.5対応）
+    let mainRoleId = null;
+    let mainPosition = '';
+    const addRoleSelect = document.getElementById('empRoleId');
+    const addPositionInput = document.getElementById('empPosition');
+
+    if (addRoleSelect && addRoleSelect.value) {
+        mainRoleId = addRoleSelect.value;
+        mainPosition = getRoleName(mainRoleId);
+    } else if (addPositionInput) {
+        mainPosition = addPositionInput.value;
+    }
+
     const allDepartments = [
-        { department_id: mainDeptId, position: mainPosition, is_main: true },
+        { department_id: mainDeptId, position: mainPosition, role_id: mainRoleId, is_main: true },
         ...additionalDepts.map(d => ({ ...d, is_main: false }))
     ];
     
@@ -593,6 +666,7 @@ async function addEmployee(event) {
         department_id: mainDeptId,
         departments: JSON.stringify(allDepartments),
         position: mainPosition || null,
+        role_id: mainRoleId,  // Phase 3.5対応
         email_company: document.getElementById('empEmailCompany').value || null,
         email_gmail: document.getElementById('empEmailGmail').value || null,
         email_shared: document.getElementById('empEmailShared').value || null,
@@ -1212,7 +1286,28 @@ function editEmployee(empId) {
     document.getElementById('editEmpId').value = employee.id;
     document.getElementById('editEmpName').value = employee.name;
     document.getElementById('editEmpDepartment').value = employee.department_id;
-    document.getElementById('editEmpPosition').value = employee.position || '';
+
+    // 役職ドロップダウンの設定（Phase 3.5対応）
+    // role_idがある場合はそれを使用、なければpositionから役職を検索
+    populateRoleSelects();
+    const editRoleSelect = document.getElementById('editEmpRoleId');
+    if (editRoleSelect) {
+        if (employee.role_id) {
+            editRoleSelect.value = employee.role_id;
+        } else if (employee.position && roles.length > 0) {
+            // positionから一致する役職を検索
+            const matchingRole = roles.find(r => r.name === employee.position);
+            if (matchingRole) {
+                editRoleSelect.value = matchingRole.id;
+            }
+        }
+    }
+    // 後方互換性: editEmpPositionがまだHTMLに存在する場合
+    const editPositionInput = document.getElementById('editEmpPosition');
+    if (editPositionInput) {
+        editPositionInput.value = employee.position || '';
+    }
+
     document.getElementById('editEmpEmailCompany').value = employee.email_company || '';
     document.getElementById('editEmpEmailGmail').value = employee.email_gmail || '';
     document.getElementById('editEmpEmailShared').value = employee.email_shared || '';
@@ -1289,9 +1384,25 @@ async function updateEmployee(event) {
     
     // 主部署を含む全部署リスト
     const mainDeptId = document.getElementById('editEmpDepartment').value;
-    const mainPosition = document.getElementById('editEmpPosition').value;
+
+    // 役職の取得（Phase 3.5対応）
+    // role_idドロップダウンがあればそれを使用、なければ従来のpositionテキスト入力を使用
+    let mainRoleId = null;
+    let mainPosition = '';
+    const editRoleSelect = document.getElementById('editEmpRoleId');
+    const editPositionInput = document.getElementById('editEmpPosition');
+
+    if (editRoleSelect && editRoleSelect.value) {
+        mainRoleId = editRoleSelect.value;
+        // role_idから役職名を取得（後方互換性のためpositionにも設定）
+        mainPosition = getRoleName(mainRoleId);
+    } else if (editPositionInput) {
+        // フォールバック: 従来のposition入力
+        mainPosition = editPositionInput.value;
+    }
+
     const allDepartments = [
-        { department_id: mainDeptId, position: mainPosition, is_main: true },
+        { department_id: mainDeptId, position: mainPosition, role_id: mainRoleId, is_main: true },
         ...additionalDepts.map(d => ({ ...d, is_main: false }))
     ];
     
@@ -1306,6 +1417,7 @@ async function updateEmployee(event) {
         department_id: mainDeptId,
         departments: JSON.stringify(allDepartments),
         position: mainPosition,
+        role_id: mainRoleId,  // Phase 3.5対応: 役職IDを追加
         email_company: document.getElementById('editEmpEmailCompany').value,
         email_gmail: document.getElementById('editEmpEmailGmail').value,
         email_shared: document.getElementById('editEmpEmailShared').value,
@@ -1355,6 +1467,7 @@ async function updateEmployee(event) {
                     department_id: updatedEmployee.department_id,
                     departments: updatedEmployee.departments,
                     position: updatedEmployee.position || null,
+                    role_id: updatedEmployee.role_id || null,  // Phase 3.5対応
                     email_company: updatedEmployee.email_company || null,
                     email_gmail: updatedEmployee.email_gmail || null,
                     email_shared: updatedEmployee.email_shared || null,
@@ -3455,60 +3568,85 @@ async function syncToSoulKun() {
             isActive: d.is_active !== false
         }));
 
-        // 役職データを生成（employeesのpositionから一意な役職を抽出）
-        const positionSet = new Set();
-        employees.forEach(e => {
-            if (e.position) positionSet.add(e.position);
-        });
-        const positions = Array.from(positionSet);
+        // 役職データを生成（Phase 3.5対応）
+        // rolesテーブルから読み込んだデータを使用（ハードコードを廃止）
+        let mappedRoles;
+        if (roles && roles.length > 0) {
+            // rolesテーブルがある場合（推奨）
+            mappedRoles = roles
+                .filter(r => r.is_active !== false)
+                .map(r => ({
+                    id: r.id,  // Supabase側のrole_id（例: role_ceo）
+                    name: r.name,
+                    level: r.level,
+                    description: r.description || null
+                }));
+            console.log('Using roles from Supabase table:', mappedRoles.length, 'roles');
+        } else {
+            // フォールバック: 従来のposition抽出方式（後方互換性）
+            console.warn('roles table not available, falling back to position extraction');
+            const positionSet = new Set();
+            employees.forEach(e => {
+                if (e.position) positionSet.add(e.position);
+            });
+            const positions = Array.from(positionSet);
 
-        // 役職レベルのマッピング（役職名から推定）
-        const rolelevels = {
-            'CEO': 1, '代表': 1, '社長': 1,
-            '取締役': 2, '役員': 2,
-            '本部長': 3, '事業部長': 3,
-            '部長': 4, 'GM': 4,
-            '次長': 5, '副部長': 5,
-            '課長': 6, 'マネージャー': 6,
-            '係長': 7, 'リーダー': 7, 'チームリーダー': 7,
-            '主任': 8,
-            '一般': 10, 'メンバー': 10, 'スタッフ': 10
-        };
+            // フォールバック用のデフォルトレベルマッピング
+            const defaultLevels = {
+                '代表取締役': 6, 'CEO': 6, 'CFO': 6, 'COO': 6,
+                '管理部マネージャー': 5, '管理部スタッフ': 5,
+                '取締役': 4, '部長': 4,
+                '課長': 3, 'リーダー': 3,
+                '社員': 2, 'メンバー': 2,
+                '業務委託': 1
+            };
 
-        const mappedRoles = positions.map((pos, idx) => ({
-            id: `role_${pos.replace(/\s+/g, '_').toLowerCase()}`,
-            name: pos,
-            level: rolelevels[pos] || 10,
-            description: null
-        }));
+            mappedRoles = positions.map((pos, idx) => ({
+                id: `role_${pos.replace(/\s+/g, '_').toLowerCase()}`,
+                name: pos,
+                level: defaultLevels[pos] || 2,  // デフォルトは社員レベル
+                description: null
+            }));
+        }
 
         // 役職が空の場合はデフォルト役職を追加
         if (mappedRoles.length === 0) {
             mappedRoles.push({
-                id: 'role_member',
-                name: 'メンバー',
-                level: 10,
+                id: 'role_employee',
+                name: '社員',
+                level: 2,
                 description: 'デフォルト役職'
             });
         }
 
-        // 役職名からroleIdを取得するマップ
+        // 役職名からroleIdを取得するマップ（フォールバック用）
         const roleIdMap = {};
         mappedRoles.forEach(r => {
             roleIdMap[r.name] = r.id;
         });
 
-        // 社員データをAPI形式にマッピング
-        const mappedEmployees = employees.map(e => ({
-            id: String(e.id),
-            name: e.name,
-            email: e.email || `${String(e.id).replace(/-/g, '')}@example.com`,
-            departmentId: String(e.department_id),
-            roleId: roleIdMap[e.position] || 'role_member',
-            isPrimary: true,
-            startDate: null,
-            endDate: null
-        }));
+        // 社員データをAPI形式にマッピング（Phase 3.5対応）
+        const mappedEmployees = employees.map(e => {
+            // role_idを優先使用、なければpositionから検索、最後にデフォルト
+            let roleId = e.role_id;
+            if (!roleId && e.position) {
+                roleId = roleIdMap[e.position];
+            }
+            if (!roleId) {
+                roleId = 'role_employee';  // デフォルト: 社員
+            }
+
+            return {
+                id: String(e.id),
+                name: e.name,
+                email: e.email_company || e.email_gmail || `${String(e.id).replace(/-/g, '')}@example.com`,
+                departmentId: String(e.department_id),
+                roleId: roleId,
+                isPrimary: true,
+                startDate: e.hire_date || null,
+                endDate: e.resignation_date || null
+            };
+        });
 
         // ソウルシンクスの組織ID
         const orgId = 'org_soulsyncs';
