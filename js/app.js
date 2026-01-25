@@ -5,6 +5,28 @@ let changeHistory = [];
 let roles = [];
 let currentViewMode = 'card'; // デフォルトはカード表示
 
+// スキーマ拡張フラグ（chatwork_account_idカラムが存在するかどうか）
+let hasChatworkAccountIdColumn = false;
+
+// スキーマチェック関数
+async function checkSchemaExtensions() {
+    try {
+        // 1件取得してカラム存在を確認
+        const response = await fetch(`${SUPABASE_REST_URL}/employees?select=chatwork_account_id&limit=1`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
+            }
+        });
+        if (response.ok) {
+            hasChatworkAccountIdColumn = true;
+            console.log('✅ chatwork_account_id column detected');
+        }
+    } catch (e) {
+        console.log('ℹ️ chatwork_account_id column not yet added');
+    }
+}
+
 // 権限管理
 let viewMode = 'edit'; // 'edit' or 'view'
 // Supabase設定
@@ -684,6 +706,11 @@ async function addEmployee(event) {
         goal_achievement: parseInt(document.getElementById('empGoalAchievement').value) || 0,
         notes: document.getElementById('empNotes').value || null
     };
+
+    // ソウルくん連携: chatwork_account_idカラムが存在する場合のみ追加
+    if (hasChatworkAccountIdColumn) {
+        employeeData.chatwork_account_id = document.getElementById('empChatworkId').value || null;
+    }
     
     // 誕生日をGoogle Calendarに同期
     if (employeeData.birthday) {
@@ -1321,6 +1348,12 @@ function editEmployee(empId) {
     document.getElementById('editEmpEvaluation').value = employee.evaluation || '-';
     document.getElementById('editEmpGoalAchievement').value = employee.goal_achievement || 0;
     document.getElementById('editEmpNotes').value = employee.notes || '';
+
+    // ChatWork ID（ソウルくん連携）
+    const editChatworkIdInput = document.getElementById('editEmpChatworkId');
+    if (editChatworkIdInput) {
+        editChatworkIdInput.value = employee.chatwork_account_id || '';
+    }
     
     // スキル・資格の表示
     try {
@@ -1435,6 +1468,11 @@ async function updateEmployee(event) {
         goal_achievement: parseInt(document.getElementById('editEmpGoalAchievement').value) || 0,
         notes: document.getElementById('editEmpNotes').value
     };
+
+    // ソウルくん連携: chatwork_account_idカラムが存在する場合のみ追加
+    if (hasChatworkAccountIdColumn) {
+        updatedEmployee.chatwork_account_id = document.getElementById('editEmpChatworkId').value || null;
+    }
     
     // 誕生日をGoogle Calendarに同期
     if (updatedEmployee.birthday && updatedEmployee.birthday !== beforeData.birthday) {
@@ -3534,8 +3572,8 @@ window.onclick = function(event) {
 // ソウルくん同期機能
 // ========================================
 
-// 本番用
-const SOULKUN_API_BASE = 'https://soulkun-api-898513057014.asia-northeast1.run.app';
+// 本番用（2026-01-25修正: 正しいCloud Run URLに更新）
+const SOULKUN_API_BASE = 'https://soulkun-api-tzu7ftekzq-an.a.run.app';
 
 async function syncToSoulKun() {
     try {
@@ -3735,8 +3773,9 @@ function saveApiToken() {
     showNotification('APIトークンを保存しました', 'success');
 }
 // ページ読み込み完了時の初期化（ファイル末尾に配置）
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOMContentLoaded: JavaScript is fully loaded');
     checkViewMode();
+    await checkSchemaExtensions();  // スキーマ拡張チェック（ソウルくん連携）
     loadData();
 });
