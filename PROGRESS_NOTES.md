@@ -1,84 +1,135 @@
 # 組織図管理システム - 作業進捗メモ
 
-## 最終更新: 2026-01-26 06:55
+## 最終更新: 2026-01-26 07:30
 
 ---
 
-## ✅ ドラッグ＆ドロップ問題 - 修正完了
+## ✅ 2026-01-26 実装完了
 
-### 問題
-`hasEditorPermission: false` が返され、ドラッグ&ドロップが動作しなかった。
+### 1. ドラッグ＆ドロップ修正（06:55）
 
-### 根本原因
-`auth.js` の `hasPermission()` 関数が、ログインしていないユーザー（`currentUser === null`）に対して常に `false` を返していた。
+**問題**: `hasEditorPermission: false` でドラッグ&ドロップが動作しなかった
+
+**解決**: `auth.js`に`ALLOW_ANONYMOUS_EDIT`フラグを追加
 
 ```javascript
-// 修正前
-function hasPermission(requiredRole = 'editor') {
-    if (!currentUser) {
-        return false;  // ← 常にfalse
-    }
-    ...
-}
+AUTH_FEATURE_FLAGS.ALLOW_ANONYMOUS_EDIT: true
 ```
 
-### 解決策
-`auth.js` に `ALLOW_ANONYMOUS_EDIT` フラグを追加し、ログインなしでも編集できるように修正。
+### 2. 部署インライン編集 & 右クリックメニュー（07:30）
 
-**修正内容**:
-1. `AUTH_FEATURE_FLAGS` に `ALLOW_ANONYMOUS_EDIT: true` を追加
-2. `hasPermission()` 関数を修正: フラグがtrueの場合、未ログインでもeditor権限を許可
+**新機能一覧**:
 
+| 機能 | 操作方法 | 説明 |
+|------|----------|------|
+| **インライン編集** | 部署名をダブルクリック | その場で部署名を変更、Enter保存/Escキャンセル |
+| **右クリックメニュー** | 部署ボックスを右クリック | コンテキストメニュー表示 |
+| ├─ 同階層に部署を追加 | メニューから選択 | 選択した部署と同じ階層に新規部署作成 |
+| ├─ 子部署を追加 | メニューから選択 | 選択した部署の下に子部署を作成 |
+| ├─ 部署名を変更 | メニューから選択 | インライン編集を起動 |
+| └─ 部署を削除 | メニューから選択 | 確認後に部署を削除（社員がいる場合は警告） |
+
+**新規ファイル**: `js/department-editor.js`（約1,150行）
+
+**主要関数**:
 ```javascript
-// 修正後
-function hasPermission(requiredRole = 'editor') {
-    // 匿名編集が許可されている場合（開発・社内用）
-    if (AUTH_FEATURE_FLAGS.ALLOW_ANONYMOUS_EDIT && !currentUser) {
-        if (requiredRole === 'admin') {
-            return false;  // adminは常にログイン必須
-        }
-        return true;  // editor権限は匿名でも許可
-    }
-    ...
-}
+// 初期化
+initializeDepartmentEditor()
+
+// コンテキストメニュー
+showContextMenu(e, departmentId)
+hideContextMenu()
+
+// インライン編集
+startInlineEditForDepartment(departmentId)
+saveInlineEdit()
+cancelInlineEdit()
+
+// クイック部署追加
+showQuickAddDepartmentModal(parentId, referenceDept)
+executeQuickAddDepartment(parentId)
 ```
 
-### 将来のセキュリティ対応
-Google OAuth設定後、`ALLOW_ANONYMOUS_EDIT: false` に変更することで、認証済みユーザーのみ編集可能になる。
+**変更履歴・監査ログ連携**:
+- 部署名変更時に`addChangeHistory()`で記録
+- 部署追加時に`addChangeHistory()`で記録
+- `logAudit()`で監査ログも記録
 
 ---
 
-## 確認済みの動作
+## デプロイ済みファイル
 
-- ✅ ドラッグ開始: OK（`Drag started:`ログ確認）
-- ✅ ドロップイベント: OK（`Drop event:`ログ確認）
-- ✅ handleEnhancedDrop呼び出し: OK
-- ✅ 権限チェック: OK（`ALLOW_ANONYMOUS_EDIT: true`で許可）
-- ✅ moveEmployeeToDepartment: window経由で参照可能
+| ファイル | 更新日時 | 内容 |
+|---------|----------|------|
+| `js/auth.js` | 06:55 | ALLOW_ANONYMOUS_EDIT追加 |
+| `js/drag-drop.js` | 06:55 | window参照修正 |
+| `js/app.js` | 07:30 | department-editor初期化追加 |
+| `js/department-editor.js` | 07:30 | 新規作成 |
+| `index.html` | 07:30 | スクリプト追加 |
 
 ---
 
-## 変更ファイル
+## 動作確認方法
 
-| ファイル | 変更内容 |
-|---------|---------|
-| `js/auth.js` | `ALLOW_ANONYMOUS_EDIT`フラグ追加、`hasPermission()`修正 |
+### インライン編集
+1. ブラウザでCmd+Shift+Rでハードリロード
+2. 部署名（例: 経営本部）をダブルクリック
+3. 新しい名前を入力
+4. Enter押下で保存
+
+### 右クリックメニュー
+1. 部署ボックスを右クリック
+2. メニューから操作を選択
+   - 同階層に部署を追加
+   - 子部署を追加
+   - 部署名を変更
+   - 部署を削除
+
+---
+
+## 技術詳細
+
+### コンテキストメニュー
+- 固定位置（`position: fixed`）で画面端からはみ出ないよう調整
+- クリック外・Escape・スクロールで自動クローズ
+- アニメーション付きで表示（`scale` + `opacity`）
+
+### インライン編集
+- 元の要素を入力フィールドに置き換え
+- フォーカスアウトで自動保存
+- 変更がない場合はキャンセル扱い
+- 入力検証（空文字チェック）
+
+### クイック追加モーダル
+- 親部署情報を自動表示
+- 重複名チェック
+- Enter押下で追加、Escape押下でキャンセル
 
 ---
 
 ## 今後のタスク
 
-- [ ] 動作確認後、デバッグログを削除（`drag-drop.js`）
-- [ ] Google OAuth設定完了後、`ALLOW_ANONYMOUS_EDIT: false`に変更
-- [ ] 本番環境（X Server）へのデプロイ
+- [ ] コンソールエラー（401/400）の調査・修正
+- [ ] Google OAuth設定後、`ALLOW_ANONYMOUS_EDIT: false`に変更
+- [ ] デバッグログの削除（本番運用前）
 
 ---
 
 ## 関連ファイル
 
-- `js/drag-drop.js` - ドラッグ&ドロップ処理
-- `js/views/tree-view.js` - ツリービュー、moveEmployeeToDepartment関数
-- `js/auth.js` - 認証・権限管理、hasPermission関数
-- `js/app.js` - メインアプリケーション
-- `js/config.js` - FEATURE_FLAGS定義
-- `js/state.js` - グローバル状態管理
+```
+js/
+├── config.js                  # FEATURE_FLAGS定義
+├── state.js                   # グローバル状態管理
+├── auth.js                    # 認証・権限管理
+├── department-editor.js       # ★新規★ 部署エディター
+├── drag-drop.js               # ドラッグ&ドロップ
+├── tree-enhancements.js       # ツリー表示強化
+├── audit.js                   # 監査ログ
+├── dashboard.js               # ダッシュボード
+├── app.js                     # メインアプリケーション
+└── views/
+    ├── card-view.js           # カード表示
+    ├── tree-view.js           # ツリー表示
+    └── list-view.js           # リスト表示
+```
