@@ -18,7 +18,7 @@ async function checkSchemaExtensions() {
             }
         });
         if (response.ok) {
-            hasChatworkAccountIdColumn = true;
+            window.hasChatworkAccountIdColumn = true;
             console.log('✅ chatwork_account_id column detected');
         }
     } catch (e) {
@@ -26,8 +26,7 @@ async function checkSchemaExtensions() {
     }
 }
 
-// 権限管理
-let viewMode = 'edit'; // 'edit' or 'view'
+// 権限管理（viewModeはstate.jsで定義済み）
 
 // Supabase設定はconfig.jsで定義済み（SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_REST_URL）
 
@@ -37,7 +36,7 @@ function checkViewMode() {
     const mode = urlParams.get('mode');
     
     if (mode === 'view') {
-        viewMode = 'view';
+        window.viewMode = 'view';
         // 閲覧専用モードのスタイルを適用
         document.body.classList.add('view-only-mode');
         showNotification('閲覧専用モードで表示しています', 'info');
@@ -45,11 +44,10 @@ function checkViewMode() {
     
     applyViewModeStyles();
 }
-let additionalDeptCounter = 0;
 
 // 閲覧専用モードのスタイル適用
 function applyViewModeStyles() {
-    if (viewMode === 'view') {
+    if (window.viewMode === 'view') {
         // 編集ボタンを全て非表示
         const style = document.createElement('style');
         style.id = 'view-only-styles';
@@ -182,7 +180,7 @@ function renderOrganizationChart() {
     container.innerHTML = '';
 
     // 表示モードに応じてレンダリング
-    if (currentViewMode === 'card') {
+    if (window.currentViewMode === 'card') {
         // カード表示（デフォルト）
         const topLevelDepts = departments.filter(d => !d.parent_id || d.parent_id === 'null');
         topLevelDepts.forEach(dept => {
@@ -194,9 +192,9 @@ function renderOrganizationChart() {
             initializeDragAndDrop();
             initializeDepartmentSorting();
         }, 100);
-    } else if (currentViewMode === 'tree') {
+    } else if (window.currentViewMode === 'tree') {
         renderTreeView(container);
-    } else if (currentViewMode === 'list') {
+    } else if (window.currentViewMode === 'list') {
         renderListView(container);
     }
 }
@@ -417,7 +415,7 @@ async function addEmployee(event) {
     };
 
     // ソウルくん連携: chatwork_account_idカラムが存在する場合のみ追加
-    if (hasChatworkAccountIdColumn) {
+    if (window.hasChatworkAccountIdColumn) {
         employeeData.chatwork_account_id = document.getElementById('empChatworkId').value || null;
     }
     
@@ -1197,7 +1195,7 @@ async function updateEmployee(event) {
     };
 
     // ソウルくん連携: chatwork_account_idカラムが存在する場合のみ追加
-    if (hasChatworkAccountIdColumn) {
+    if (window.hasChatworkAccountIdColumn) {
         updatedEmployee.chatwork_account_id = document.getElementById('editEmpChatworkId').value || null;
     }
     
@@ -1850,11 +1848,11 @@ async function restoreFromHistory(historyId) {
 // 新機能: 複数部署管理
 // ============================================
 function addDepartmentField() {
-    additionalDeptCounter++;
+    window.additionalDeptCounter++;
     const container = document.getElementById('additionalDepartments');
     const fieldGroup = document.createElement('div');
     fieldGroup.className = 'flex gap-2 mb-2';
-    fieldGroup.id = `addDept-${additionalDeptCounter}`;
+    fieldGroup.id = `addDept-${window.additionalDeptCounter}`;
     
     fieldGroup.innerHTML = `
         <select class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-add-dept-select>
@@ -1862,7 +1860,7 @@ function addDepartmentField() {
             ${departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
         </select>
         <input type="text" placeholder="役職" class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-add-dept-position>
-        <button type="button" onclick="removeDepartmentField('addDept-${additionalDeptCounter}')" 
+        <button type="button" onclick="removeDepartmentField('addDept-${window.additionalDeptCounter}')" 
                 class="btn bg-red-500 text-white px-3">
             <i class="fas fa-times"></i>
         </button>
@@ -1872,11 +1870,11 @@ function addDepartmentField() {
 }
 
 function addEditDepartmentField() {
-    additionalDeptCounter++;
+    window.additionalDeptCounter++;
     const container = document.getElementById('editAdditionalDepartments');
     const fieldGroup = document.createElement('div');
     fieldGroup.className = 'flex gap-2 mb-2';
-    fieldGroup.id = `editDept-${additionalDeptCounter}`;
+    fieldGroup.id = `editDept-${window.additionalDeptCounter}`;
     
     fieldGroup.innerHTML = `
         <select class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-select>
@@ -1884,7 +1882,7 @@ function addEditDepartmentField() {
             ${departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
         </select>
         <input type="text" placeholder="役職" class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-position>
-        <button type="button" onclick="removeDepartmentField('editDept-${additionalDeptCounter}')" 
+        <button type="button" onclick="removeDepartmentField('editDept-${window.additionalDeptCounter}')" 
                 class="btn bg-red-500 text-white px-3">
             <i class="fas fa-times"></i>
         </button>
@@ -1925,10 +1923,10 @@ function renderAdditionalDepartments(container, additionalDepts) {
     if (!additionalDepts || additionalDepts.length === 0) return;
     
     additionalDepts.forEach(dept => {
-        additionalDeptCounter++;
+        window.additionalDeptCounter++;
         const fieldGroup = document.createElement('div');
         fieldGroup.className = 'flex gap-2 mb-2';
-        fieldGroup.id = `editDept-${additionalDeptCounter}`;
+        fieldGroup.id = `editDept-${window.additionalDeptCounter}`;
         
         fieldGroup.innerHTML = `
             <select class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-select>
@@ -1937,7 +1935,7 @@ function renderAdditionalDepartments(container, additionalDepts) {
             </select>
             <input type="text" placeholder="役職" value="${dept.position || ''}" 
                    class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-position>
-            <button type="button" onclick="removeDepartmentField('editDept-${additionalDeptCounter}')" 
+            <button type="button" onclick="removeDepartmentField('editDept-${window.additionalDeptCounter}')" 
                     class="btn bg-red-500 text-white px-3">
                 <i class="fas fa-times"></i>
             </button>
@@ -2046,10 +2044,9 @@ function downloadICS(name, birthday) {
 // ============================================
 // 社員詳細表示
 // ============================================
-let currentDetailEmployeeId = null;
 
 function showEmployeeDetail(empId) {
-    currentDetailEmployeeId = empId;
+    window.currentDetailEmployeeId = empId;
     const employee = employees.find(e => e.id === empId);
     if (!employee) return;
     
@@ -2239,14 +2236,14 @@ function showEmployeeDetail(empId) {
 function editEmployeeFromDetail() {
     closeModal('employeeDetailModal');
     setTimeout(() => {
-        editEmployee(currentDetailEmployeeId);
+        editEmployee(window.currentDetailEmployeeId);
     }, 100);
 }
 
 function confirmDeleteEmployeeFromDetail() {
     closeModal('employeeDetailModal');
     setTimeout(() => {
-        confirmDeleteEmployee(currentDetailEmployeeId);
+        confirmDeleteEmployee(window.currentDetailEmployeeId);
     }, 100);
 }
 
@@ -2802,7 +2799,7 @@ function downloadTemplate() {
 // ============================================
 
 function setViewMode(mode) {
-    currentViewMode = mode;
+    window.currentViewMode = mode;
     
     // ボタンのスタイル更新
     document.querySelectorAll('[id^="viewMode"]').forEach(btn => {
@@ -2824,11 +2821,11 @@ function renderOrganizationByMode() {
     const orgChartDiv = document.getElementById('orgChart');
     orgChartDiv.innerHTML = '';
     
-    if (currentViewMode === 'card') {
+    if (window.currentViewMode === 'card') {
         renderCardView(orgChartDiv);
-    } else if (currentViewMode === 'tree') {
+    } else if (window.currentViewMode === 'tree') {
         renderTreeView(orgChartDiv);
-    } else if (currentViewMode === 'list') {
+    } else if (window.currentViewMode === 'list') {
         renderListView(orgChartDiv);
     }
 }

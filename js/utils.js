@@ -396,9 +396,84 @@ function readFile(file) {
 }
 
 // ============================================
+// 通知（audit.js, dashboard.jsより先に必要）
+// ============================================
+
+/**
+ * 通知を表示
+ * @param {string} message - メッセージ（HTML可）
+ * @param {string} type - タイプ（'success', 'error', 'info'）
+ * @param {number} duration - 表示時間（ミリ秒）
+ */
+function showNotification(message, type = 'info', duration = 3000) {
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500'
+    };
+
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-4 rounded-lg shadow-lg animate-fade-in`;
+    notification.style.zIndex = '9999';
+    notification.style.maxWidth = '400px';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'flex items-center gap-3';
+
+    const icon = document.createElement('i');
+    icon.className = `fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}`;
+
+    const messageDiv = document.createElement('div');
+    messageDiv.innerHTML = message;
+
+    contentDiv.appendChild(icon);
+    contentDiv.appendChild(messageDiv);
+    notification.appendChild(contentDiv);
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transition = 'opacity 0.3s';
+        setTimeout(() => notification.remove(), 300);
+    }, duration);
+}
+
+// ============================================
+// モーダル操作（audit.js, dashboard.jsより先に必要）
+// ============================================
+
+/**
+ * モーダルを開く
+ * @param {string} modalId - モーダルのID
+ */
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+    } else {
+        console.error(`Modal not found: ${modalId}`);
+    }
+}
+
+/**
+ * モーダルを閉じる
+ * @param {string} modalId - モーダルのID
+ */
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// ============================================
 // グローバルエクスポート
 // ============================================
 
+window.showNotification = showNotification;
+window.openModal = openModal;
+window.closeModal = closeModal;
 window.generateId = generateId;
 window.generateUUID = generateUUID;
 window.formatDate = formatDate;

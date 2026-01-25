@@ -151,14 +151,23 @@ function calculateDataQualityScore() {
  * ダッシュボードモーダルを表示
  */
 function showDashboardModal() {
-    const modal = document.getElementById('dashboardModal');
-    if (!modal) {
-        console.error('Dashboard modal not found');
-        return;
-    }
+    try {
+        const modal = document.getElementById('dashboardModal');
+        if (!modal) {
+            console.error('Dashboard modal not found');
+            showNotification('ダッシュボードモーダルが見つかりません', 'error');
+            return;
+        }
 
-    updateDashboardContent();
-    openModal('dashboardModal');
+        // モーダルを先に開く
+        openModal('dashboardModal');
+
+        // その後でコンテンツを更新
+        updateDashboardContent();
+    } catch (error) {
+        console.error('showDashboardModal error:', error);
+        showNotification('ダッシュボードの表示中にエラーが発生しました', 'error');
+    }
 }
 
 /**
@@ -168,45 +177,56 @@ function updateDashboardContent() {
     const container = document.getElementById('dashboardContent');
     if (!container) return;
 
-    const completion = calculateCompletionRate();
-    const quality = calculateDataQualityScore();
+    try {
+        const completion = calculateCompletionRate();
+        const quality = calculateDataQualityScore();
 
-    container.innerHTML = `
-        <!-- 品質スコア -->
-        <div class="text-center mb-6 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
-            <div class="text-6xl font-bold ${quality.color} mb-2">${quality.grade}</div>
-            <div class="text-2xl font-semibold text-gray-700">${quality.score}点</div>
-            <div class="text-sm text-gray-500 mt-1">データ品質スコア</div>
-        </div>
+        // 安全に配列長を取得
+        const empCount = (typeof employees !== 'undefined' && employees) ? employees.length : 0;
+        const deptCount = (typeof departments !== 'undefined' && departments) ? departments.length : 0;
+        const roleCount = (typeof roles !== 'undefined' && roles) ? roles.length : 0;
+        const hasChatwork = typeof hasChatworkAccountIdColumn !== 'undefined' ? hasChatworkAccountIdColumn : false;
 
-        <!-- 完了率一覧 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            ${createCompletionCard('役職', completion.roleId, 'fas fa-user-tag', 'role_id')}
-            ${hasChatworkAccountIdColumn ? createCompletionCard('ChatWork ID', completion.chatworkId, 'fas fa-comments', 'chatwork_account_id') : ''}
-            ${createCompletionCard('メールアドレス', completion.email, 'fas fa-envelope', 'email')}
-            ${createCompletionCard('電話番号', completion.phone, 'fas fa-phone', 'phone')}
-        </div>
+        container.innerHTML = `
+            <!-- 品質スコア -->
+            <div class="text-center mb-6 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
+                <div class="text-6xl font-bold ${quality.color} mb-2">${quality.grade}</div>
+                <div class="text-2xl font-semibold text-gray-700">${quality.score}点</div>
+                <div class="text-sm text-gray-500 mt-1">データ品質スコア</div>
+            </div>
 
-        <!-- 概要統計 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-            <div class="text-center">
-                <div class="text-2xl font-bold text-gray-800">${employees.length}</div>
-                <div class="text-xs text-gray-500">総社員数</div>
+            <!-- 完了率一覧 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                ${createCompletionCard('役職', completion.roleId, 'fas fa-user-tag', 'role_id')}
+                ${hasChatwork ? createCompletionCard('ChatWork ID', completion.chatworkId, 'fas fa-comments', 'chatwork_account_id') : ''}
+                ${createCompletionCard('メールアドレス', completion.email, 'fas fa-envelope', 'email')}
+                ${createCompletionCard('電話番号', completion.phone, 'fas fa-phone', 'phone')}
             </div>
-            <div class="text-center">
-                <div class="text-2xl font-bold text-gray-800">${departments.length}</div>
-                <div class="text-xs text-gray-500">部署数</div>
+
+            <!-- 概要統計 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-800">${empCount}</div>
+                    <div class="text-xs text-gray-500">総社員数</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-800">${deptCount}</div>
+                    <div class="text-xs text-gray-500">部署数</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-800">${roleCount}</div>
+                    <div class="text-xs text-gray-500">役職数</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">${completion.overall}%</div>
+                    <div class="text-xs text-gray-500">設定完了率</div>
+                </div>
             </div>
-            <div class="text-center">
-                <div class="text-2xl font-bold text-gray-800">${roles.length}</div>
-                <div class="text-xs text-gray-500">役職数</div>
-            </div>
-            <div class="text-center">
-                <div class="text-2xl font-bold text-blue-600">${completion.overall}%</div>
-                <div class="text-xs text-gray-500">設定完了率</div>
-            </div>
-        </div>
-    `;
+        `;
+    } catch (error) {
+        console.error('updateDashboardContent error:', error);
+        container.innerHTML = '<div class="text-center py-8 text-red-500">ダッシュボードの表示中にエラーが発生しました</div>';
+    }
 }
 
 /**

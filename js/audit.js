@@ -556,16 +556,23 @@ async function rollbackDepartment(action, targetId, beforeData, afterData) {
  * 監査ログモーダルを表示
  */
 async function showAuditLogModal() {
-    const modal = document.getElementById('auditLogModal');
-    if (!modal) {
-        console.error('Audit log modal not found');
-        return;
+    try {
+        const modal = document.getElementById('auditLogModal');
+        if (!modal) {
+            console.error('Audit log modal not found');
+            showNotification('監査ログモーダルが見つかりません', 'error');
+            return;
+        }
+
+        // モーダルを先に開く
+        openModal('auditLogModal');
+
+        // その後でコンテンツをロード
+        await loadAuditLogPage(0);
+    } catch (error) {
+        console.error('showAuditLogModal error:', error);
+        showNotification('監査ログの表示中にエラーが発生しました', 'error');
     }
-
-    // 初回ロード
-    await loadAuditLogPage(0);
-
-    openModal('auditLogModal');
 }
 
 /**
@@ -576,31 +583,36 @@ async function loadAuditLogPage(page = 0) {
     const container = document.getElementById('auditLogContent');
     if (!container) return;
 
-    // ローディング表示
-    container.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
+    try {
+        // ローディング表示
+        container.innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl"></i></div>';
 
-    // フィルタ値を取得
-    const filterAction = document.getElementById('auditFilterAction')?.value || '';
-    const filterType = document.getElementById('auditFilterType')?.value || '';
+        // フィルタ値を取得
+        const filterAction = document.getElementById('auditFilterAction')?.value || '';
+        const filterType = document.getElementById('auditFilterType')?.value || '';
 
-    // ログを取得
-    const logs = await getAuditLogs({
-        offset: page * AUDIT_CONFIG.PAGE_SIZE,
-        limit: AUDIT_CONFIG.PAGE_SIZE,
-        action: filterAction || null,
-        targetType: filterType || null
-    });
+        // ログを取得
+        const logs = await getAuditLogs({
+            offset: page * AUDIT_CONFIG.PAGE_SIZE,
+            limit: AUDIT_CONFIG.PAGE_SIZE,
+            action: filterAction || null,
+            targetType: filterType || null
+        });
 
-    if (logs.length === 0) {
-        container.innerHTML = '<div class="text-center py-8 text-gray-500">監査ログがありません</div>';
-        return;
+        if (!logs || logs.length === 0) {
+            container.innerHTML = '<div class="text-center py-8 text-gray-500">監査ログがありません<br><small class="text-xs">（ログインすると表示されます）</small></div>';
+            return;
+        }
+
+        // ログを表示
+        container.innerHTML = logs.map(log => createAuditLogCard(log)).join('');
+
+        // ページネーション更新
+        updateAuditLogPagination(page, logs.length);
+    } catch (error) {
+        console.error('loadAuditLogPage error:', error);
+        container.innerHTML = '<div class="text-center py-8 text-red-500">監査ログの読み込みに失敗しました</div>';
     }
-
-    // ログを表示
-    container.innerHTML = logs.map(log => createAuditLogCard(log)).join('');
-
-    // ページネーション更新
-    updateAuditLogPagination(page, logs.length);
 }
 
 /**
