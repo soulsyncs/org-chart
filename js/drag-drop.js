@@ -81,8 +81,10 @@ function updateDropZoneStyles() {
  * @returns {Promise<boolean>}
  */
 async function addConcurrentDepartment(employeeId, targetDeptId) {
-    const employee = employees.find(e => e.id === employeeId);
-    const targetDept = departments.find(d => d.id === targetDeptId);
+    const empArray = window.employees || employees;
+    const deptArray = window.departments || departments;
+    const employee = empArray.find(e => e.id === employeeId);
+    const targetDept = deptArray.find(d => d.id === targetDeptId);
 
     if (!employee || !targetDept) {
         showNotification('社員または部署が見つかりません', 'error');
@@ -107,7 +109,7 @@ async function addConcurrentDepartment(employeeId, targetDeptId) {
     }
 
     // 兼務追加確認モーダル（役職入力欄付き）
-    const currentDept = departments.find(d => d.id === employee.department_id);
+    const currentDept = deptArray.find(d => d.id === employee.department_id);
 
     const modalHtml = `
         <div class="bg-green-50 p-4 rounded-lg">
@@ -156,7 +158,9 @@ async function addConcurrentDepartment(employeeId, targetDeptId) {
  * @param {string} targetDeptId - 追加先部署ID
  */
 async function executeConcurrentAdd(employeeId, targetDeptId) {
-    const employee = employees.find(e => e.id === employeeId);
+    const empArray = window.employees || employees;
+    const deptArray = window.departments || departments;
+    const employee = empArray.find(e => e.id === employeeId);
     const position = document.getElementById('concurrentPosition')?.value || '';
 
     closeModal('confirmModal');
@@ -204,17 +208,19 @@ async function executeConcurrentAdd(employeeId, targetDeptId) {
         });
 
         if (response.ok) {
-            const targetDept = departments.find(d => d.id === targetDeptId);
+            const targetDept = deptArray.find(d => d.id === targetDeptId);
 
             // 変更履歴を記録
-            await addChangeHistory(
-                '兼務追加',
-                'employee',
-                employeeId,
-                beforeData,
-                { ...employee, departments: JSON.stringify(existingDepts) },
-                `${employee.name}を${targetDept.name}に兼務追加しました`
-            );
+            if (typeof window.addChangeHistory === 'function') {
+                await window.addChangeHistory(
+                    '兼務追加',
+                    'employee',
+                    employeeId,
+                    beforeData,
+                    { ...employee, departments: JSON.stringify(existingDepts) },
+                    `${employee.name}を${targetDept.name}に兼務追加しました`
+                );
+            }
 
             // Phase 5: 監査ログ記録
             if (typeof logAudit === 'function') {
@@ -229,7 +235,9 @@ async function executeConcurrentAdd(employeeId, targetDeptId) {
                 });
             }
 
-            await loadData();
+            if (typeof window.loadData === 'function') {
+                await window.loadData();
+            }
             showNotification(`${employee.name}を${targetDept.name}に兼務追加しました`, 'success');
 
             if (window._concurrentResolve) window._concurrentResolve(true);
@@ -286,8 +294,15 @@ async function handleEnhancedDrop(e, targetDeptId) {
     } else {
         // 通常の移動
         console.log('➡️ Normal move, calling moveEmployeeToDepartment');
-        console.log('📌 moveEmployeeToDepartment available:', typeof moveEmployeeToDepartment);
-        await moveEmployeeToDepartment(employeeId, targetDeptId);
+        console.log('📌 window.moveEmployeeToDepartment available:', typeof window.moveEmployeeToDepartment);
+
+        if (typeof window.moveEmployeeToDepartment !== 'function') {
+            console.error('❌ moveEmployeeToDepartment is not available!');
+            showNotification('移動機能が利用できません', 'error');
+            return;
+        }
+
+        await window.moveEmployeeToDepartment(employeeId, targetDeptId);
         console.log('✅ moveEmployeeToDepartment completed');
     }
 
@@ -321,7 +336,8 @@ function cleanupDragStyles() {
  */
 function onDragStart(e, employeeId) {
     isDragging = true;
-    draggedEmployee = employees.find(emp => emp.id === employeeId);
+    const empArray = window.employees || employees;
+    draggedEmployee = empArray.find(emp => emp.id === employeeId);
 
     // ドラッグ中の要素を半透明に
     e.target.classList.add('dragging');

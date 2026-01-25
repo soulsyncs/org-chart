@@ -25,6 +25,7 @@ const AUTH_FEATURE_FLAGS = {
     ENABLE_AUTH: true,           // 認証機能を有効化
     ENABLE_RLS: true,            // RLSを有効化
     ALLOW_ANONYMOUS_VIEW: true,  // 未ログインでも閲覧可能
+    ALLOW_ANONYMOUS_EDIT: true,  // 未ログインでも編集可能（開発・社内用）
     DEBUG_MODE: false            // デバッグログ出力
 };
 
@@ -240,6 +241,16 @@ async function checkEditPermission(email) {
  * @returns {boolean} - 権限があればtrue
  */
 function hasPermission(requiredRole = 'editor') {
+    // 匿名編集が許可されている場合（開発・社内用）
+    if (AUTH_FEATURE_FLAGS.ALLOW_ANONYMOUS_EDIT && !currentUser) {
+        // adminが必要な操作はログイン必須
+        if (requiredRole === 'admin') {
+            return false;
+        }
+        // editor権限は匿名でも許可
+        return true;
+    }
+
     if (!currentUser) {
         return false;
     }

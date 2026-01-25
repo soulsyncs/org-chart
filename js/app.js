@@ -2876,6 +2876,7 @@ if (_originalOpenModal) {
 window.showConfirmModal = showConfirmModal;
 window.showConfirmModalCallback = showConfirmModalCallback;
 window.loadData = loadData;
+window.addChangeHistory = addChangeHistory;
 window.employees = employees;
 window.departments = departments;
 

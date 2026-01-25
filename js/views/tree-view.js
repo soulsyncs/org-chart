@@ -272,7 +272,15 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
     `;
 
     console.log('⏳ Calling showConfirmModal...');
-    const result = await showConfirmModal(confirmMsg);
+    console.log('📌 window.showConfirmModal available:', typeof window.showConfirmModal);
+
+    if (typeof window.showConfirmModal !== 'function') {
+        console.error('❌ showConfirmModal is not available!');
+        showNotification('確認モーダルが利用できません', 'error');
+        return;
+    }
+
+    const result = await window.showConfirmModal(confirmMsg);
     console.log('✅ Confirmation result:', result);
     if (!result) {
         console.log('❌ User cancelled');
@@ -333,8 +341,8 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
         }
 
         // 変更履歴に記録
-        if (typeof addChangeHistory === 'function') {
-            await addChangeHistory('社員部署移動', '社員', beforeData, {
+        if (typeof window.addChangeHistory === 'function') {
+            await window.addChangeHistory('社員部署移動', '社員', beforeData, {
                 ...beforeData,
                 department_id: targetDeptId
             });
@@ -343,8 +351,8 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
         showNotification(`${employee.name}さんを${targetDept.name}に移動しました`, 'success');
 
         // データ再読み込み
-        if (typeof loadData === 'function') {
-            await loadData();
+        if (typeof window.loadData === 'function') {
+            await window.loadData();
         }
 
     } catch (error) {
