@@ -98,14 +98,19 @@ function createTreeNodeCompact(dept) {
         if (!employeeId) return;
 
         // 既にこの部署の社員かチェック
-        const employee = employees.find(emp => emp.id === employeeId);
+        const employee = (window.employees || employees).find(emp => emp.id === employeeId);
+        console.log('📋 Found employee:', employee ? employee.name : 'NOT FOUND', 'Current dept:', employee?.department_id, 'Target:', dept.id);
+
         if (employee && employee.department_id === dept.id) {
+            console.log('⏭️ Same department, skipping');
             return; // 同じ部署なのでスキップ
         }
 
+        console.log('🔄 Calling moveEmployeeToDepartment...');
         if (typeof handleEnhancedDrop === 'function' && FEATURE_FLAGS && FEATURE_FLAGS.ENABLE_SHIFT_DROP_CONCURRENT) {
             await handleEnhancedDrop(e, dept.id);
         } else if (typeof moveEmployeeToDepartment === 'function') {
+            console.log('✅ moveEmployeeToDepartment exists, calling...');
             await moveEmployeeToDepartment(employeeId, dept.id);
         }
     });
@@ -223,10 +228,21 @@ function showDepartmentDetail(deptId) {
  * @param {string} targetDeptId - 移動先部署ID
  */
 async function moveEmployeeToDepartment(employeeId, targetDeptId) {
-    const employee = employees.find(e => e.id === employeeId);
-    const targetDept = departments.find(d => d.id === targetDeptId);
+    console.log('🚚 moveEmployeeToDepartment called:', { employeeId, targetDeptId });
+
+    // window経由でグローバル変数にアクセス
+    const empArray = window.employees || employees;
+    const deptArray = window.departments || departments;
+
+    console.log('📊 Data available:', { employees: empArray.length, departments: deptArray.length });
+
+    const employee = empArray.find(e => e.id === employeeId);
+    const targetDept = deptArray.find(d => d.id === targetDeptId);
+
+    console.log('🔍 Found:', { employee: employee?.name, targetDept: targetDept?.name });
 
     if (!employee || !targetDept) {
+        console.error('❌ Employee or department not found!');
         showNotification('社員または部署が見つかりません', 'error');
         return;
     }
@@ -237,7 +253,10 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
         return;
     }
 
-    const currentDept = departments.find(d => d.id === employee.department_id);
+    const currentDept = deptArray.find(d => d.id === employee.department_id);
+
+    console.log('💬 Showing confirmation modal...');
+    console.log('📌 showConfirmModal available:', typeof showConfirmModal);
 
     // 確認モーダル
     const confirmMsg = `
@@ -252,8 +271,13 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
         </div>
     `;
 
+    console.log('⏳ Calling showConfirmModal...');
     const result = await showConfirmModal(confirmMsg);
-    if (!result) return;
+    console.log('✅ Confirmation result:', result);
+    if (!result) {
+        console.log('❌ User cancelled');
+        return;
+    }
 
     try {
         // 移動前のデータを保存
