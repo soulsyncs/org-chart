@@ -126,28 +126,47 @@ async function loadData() {
         const empData = await empResponse.json();
         employees = empData || [];
 
-        // 変更履歴の読み込み
-        const historyResponse = await fetch(`${SUPABASE_REST_URL}/change_history?limit=100&order=created_at.desc`, {
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'apikey': SUPABASE_ANON_KEY,
-                'Content-Type': 'application/json'
+        // 変更履歴の読み込み（テーブルが存在しない場合はスキップ）
+        try {
+            const historyResponse = await fetch(`${SUPABASE_REST_URL}/change_history?limit=100&order=created_at.desc`, {
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                }
+            });
+            if (historyResponse.ok) {
+                const historyData = await historyResponse.json();
+                changeHistory = Array.isArray(historyData) ? historyData : [];
+            } else {
+                // テーブルが存在しない場合などはエラーを無視
+                console.log('change_history table not available, skipping...');
+                changeHistory = [];
             }
-        });
-        const historyData = await historyResponse.json();
-        changeHistory = historyData || [];
+        } catch (err) {
+            console.log('change_history load skipped:', err.message);
+            changeHistory = [];
+        }
 
         // 役職データの読み込み（Phase 3.5対応）
-        const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?is_active=eq.true&order=level.desc,display_order.asc`, {
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'apikey': SUPABASE_ANON_KEY,
-                'Content-Type': 'application/json'
+        try {
+            const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?is_active=eq.true&order=level.desc,display_order.asc`, {
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                }
+            });
+            if (rolesResponse.ok) {
+                const rolesData = await rolesResponse.json();
+                roles = Array.isArray(rolesData) ? rolesData : [];
+                console.log('Loaded roles:', roles.length, 'items');
+            } else {
+                console.log('roles table not available, skipping...');
+                roles = [];
             }
-        });
-        const rolesData = await rolesResponse.json();
-        roles = rolesData || [];
-        console.log('Loaded roles:', roles.length, 'items');
+        } catch (err) {
+            console.log('roles load skipped:', err.message);
+            roles = [];
+        }
 
         // window変数を更新（他モジュールからアクセス可能にする）
         window.employees = employees;
@@ -758,7 +777,12 @@ async function addChangeHistory(actionType, targetType, targetId, beforeData, af
     try {
         await fetch(`${SUPABASE_REST_URL}/change_history`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
             body: JSON.stringify(historyData)
         });
     } catch (error) {
@@ -769,9 +793,14 @@ async function addChangeHistory(actionType, targetType, targetId, beforeData, af
 // 変更履歴の表示
 async function showHistory() {
     try {
-        const response = await fetch(`${SUPABASE_REST_URL}/change_history?limit=50&order=created_at.desc`);
+        const response = await fetch(`${SUPABASE_REST_URL}/change_history?limit=50&order=created_at.desc`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            }
+        });
         const data = await response.json();
-        changeHistory = data.data || [];
+        changeHistory = Array.isArray(data) ? data : (data.data || []);
 
         const content = document.getElementById('historyContent');
         content.innerHTML = '';
