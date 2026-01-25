@@ -383,6 +383,7 @@ function createEnhancedTreeEmployeeItem(emp, currentDeptId) {
 
     // ドラッグイベント
     empItem.addEventListener('dragstart', (e) => {
+        console.log('🚀 Drag started:', emp.name, emp.id);
         empItem.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', emp.id);

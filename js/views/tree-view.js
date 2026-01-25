@@ -73,6 +73,43 @@ function createTreeNodeCompact(dept) {
 
     node.appendChild(deptBox);
 
+    // ノード全体もドロップゾーンとして設定（より広い範囲でドロップ可能に）
+    node.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        deptBox.classList.add('drag-over');
+    });
+
+    node.addEventListener('dragleave', (e) => {
+        // 子要素へのleaveを無視
+        if (!node.contains(e.relatedTarget)) {
+            deptBox.classList.remove('drag-over');
+        }
+    });
+
+    node.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        deptBox.classList.remove('drag-over');
+
+        const employeeId = e.dataTransfer.getData('text/plain');
+        console.log('📦 Drop event:', { employeeId, targetDept: dept.name, deptId: dept.id });
+        if (!employeeId) return;
+
+        // 既にこの部署の社員かチェック
+        const employee = employees.find(emp => emp.id === employeeId);
+        if (employee && employee.department_id === dept.id) {
+            return; // 同じ部署なのでスキップ
+        }
+
+        if (typeof handleEnhancedDrop === 'function' && FEATURE_FLAGS && FEATURE_FLAGS.ENABLE_SHIFT_DROP_CONCURRENT) {
+            await handleEnhancedDrop(e, dept.id);
+        } else if (typeof moveEmployeeToDepartment === 'function') {
+            await moveEmployeeToDepartment(employeeId, dept.id);
+        }
+    });
+
     // 社員リスト（Phase 3: 役職順ソート対応）
     let deptEmployees;
     if (typeof getEmployeesSortedByRole === 'function' && FEATURE_FLAGS && FEATURE_FLAGS.ENABLE_ROLE_SORTING) {

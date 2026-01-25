@@ -149,6 +149,11 @@ async function loadData() {
         roles = rolesData || [];
         console.log('Loaded roles:', roles.length, 'items');
 
+        // window変数を更新（他モジュールからアクセス可能にする）
+        window.employees = employees;
+        window.departments = departments;
+        window.roles = roles;
+
         // UIの更新
         updateStatistics();
         renderOrganizationChart();
