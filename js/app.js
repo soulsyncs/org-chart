@@ -187,7 +187,9 @@ function renderOrganizationChart() {
     // 表示モードに応じてレンダリング
     if (window.currentViewMode === 'card') {
         // カード表示（デフォルト）
-        const topLevelDepts = departments.filter(d => !d.parent_id || d.parent_id === 'null');
+        const topLevelDepts = departments
+            .filter(d => !d.parent_id || d.parent_id === 'null')
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
         topLevelDepts.forEach(dept => {
             const deptSection = createDepartmentSectionWithOrder(dept);
             container.appendChild(deptSection);
@@ -1498,8 +1500,10 @@ function generatePDFContent() {
     `;
     
     // 部署ごとに社員リストを生成
-    const topLevelDepts = departments.filter(d => !d.parent_id);
-    
+    const topLevelDepts = departments
+        .filter(d => !d.parent_id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
     topLevelDepts.forEach((dept, deptIndex) => {
         html += generateDepartmentPDF(dept, deptIndex > 0);
     });

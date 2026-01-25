@@ -237,9 +237,25 @@
             content: '';
             position: absolute;
             top: 0;
-            left: 15%;
-            right: 15%;
+            left: 0;
+            right: 0;
             height: 1px;
+            background: #d1d5db;
+        }
+
+        /* 子部署間の垂直接続線 */
+        .tree-children-compact > .tree-node-compact {
+            position: relative;
+        }
+
+        .tree-children-compact > .tree-node-compact::before {
+            content: '';
+            position: absolute;
+            top: -0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 0.5rem;
             background: #d1d5db;
         }
         

@@ -119,8 +119,10 @@ function createDepartmentSectionWithOrder(dept) {
         section.appendChild(empGrid);
     }
 
-    // 子部署
-    const childDepts = departments.filter(d => d.parent_id === dept.id);
+    // 子部署（sort_order順にソート）
+    const childDepts = departments
+        .filter(d => d.parent_id === dept.id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     if (childDepts.length > 0) {
         const childContainer = document.createElement('div');
         childContainer.className = 'card-children-container';
@@ -237,8 +239,10 @@ function createDepartmentSection(dept) {
         section.appendChild(empGrid);
     }
 
-    // 子部署
-    const childDepts = departments.filter(d => d.parent_id === dept.id);
+    // 子部署（sort_order順にソート）
+    const childDepts = departments
+        .filter(d => d.parent_id === dept.id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     if (childDepts.length > 0) {
         const childContainer = document.createElement('div');
         childContainer.className = 'card-children-container';
