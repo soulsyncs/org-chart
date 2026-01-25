@@ -63,6 +63,33 @@ function createDepartmentSectionWithOrder(dept) {
     `;
     section.appendChild(header);
 
+    // ドラッグ&ドロップハンドラー（Phase 4対応）
+    section.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        section.classList.add('drag-over');
+    });
+
+    section.addEventListener('dragleave', (e) => {
+        if (e.target === section) {
+            section.classList.remove('drag-over');
+        }
+    });
+
+    section.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        section.classList.remove('drag-over');
+
+        if (typeof handleEnhancedDrop === 'function' && FEATURE_FLAGS && FEATURE_FLAGS.ENABLE_SHIFT_DROP_CONCURRENT) {
+            await handleEnhancedDrop(e, dept.id);
+        } else {
+            const employeeId = e.dataTransfer.getData('text/plain');
+            if (employeeId && typeof moveEmployeeToDepartment === 'function') {
+                await moveEmployeeToDepartment(employeeId, dept.id);
+            }
+        }
+    });
+
     // この部署の社員（主所属のみ）
     // Phase 3: 役職順ソートが有効な場合はそちらを優先、無効なら department_order でソート
     let deptEmployees = employees.filter(e => e.department_id === dept.id);
@@ -148,6 +175,35 @@ function createDepartmentSection(dept) {
         </div>
     `;
     section.appendChild(header);
+
+    // ドラッグ&ドロップハンドラー（Phase 4対応）
+    section.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        section.classList.add('drag-over');
+    });
+
+    section.addEventListener('dragleave', (e) => {
+        // 子要素へのdragleaveを無視
+        if (e.target === section) {
+            section.classList.remove('drag-over');
+        }
+    });
+
+    section.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        section.classList.remove('drag-over');
+
+        // Phase 4: 強化されたドロップハンドラーを使用
+        if (typeof handleEnhancedDrop === 'function' && FEATURE_FLAGS && FEATURE_FLAGS.ENABLE_SHIFT_DROP_CONCURRENT) {
+            await handleEnhancedDrop(e, dept.id);
+        } else {
+            const employeeId = e.dataTransfer.getData('text/plain');
+            if (employeeId && typeof moveEmployeeToDepartment === 'function') {
+                await moveEmployeeToDepartment(employeeId, dept.id);
+            }
+        }
+    });
 
     // この部署の社員（主所属 + 兼務）- Phase 3: 役職順ソート対応
     let deptEmployees;
