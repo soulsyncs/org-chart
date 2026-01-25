@@ -202,6 +202,13 @@ function renderOrganizationChart() {
     } else if (window.currentViewMode === 'list') {
         renderListView(container);
     }
+
+    // 部署エディターのイベントを再設定（ダブルクリック・右クリック）
+    if (typeof attachDepartmentEditorEvents === 'function') {
+        setTimeout(() => {
+            attachDepartmentEditorEvents();
+        }, 150);
+    }
 }
 
 // ============================================
@@ -2825,13 +2832,21 @@ function setViewMode(mode) {
 function renderOrganizationByMode() {
     const orgChartDiv = document.getElementById('orgChart');
     orgChartDiv.innerHTML = '';
-    
+
     if (window.currentViewMode === 'card') {
         renderCardView(orgChartDiv);
     } else if (window.currentViewMode === 'tree') {
         renderTreeView(orgChartDiv);
     } else if (window.currentViewMode === 'list') {
         renderListView(orgChartDiv);
+    }
+
+    // 部署エディターのイベントを再設定（ダブルクリック・右クリック）
+    if (typeof attachDepartmentEditorEvents === 'function') {
+        // 少し遅延させてDOMが完全に構築されるのを待つ
+        setTimeout(() => {
+            attachDepartmentEditorEvents();
+        }, 50);
     }
 }
 
@@ -2902,6 +2917,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Phase 6: ダッシュボード初期化
     if (typeof initializePhase6 === 'function') {
         initializePhase6();
+    }
+
+    // 部署エディター初期化（インライン編集・右クリックメニュー）
+    if (typeof initializeDepartmentEditor === 'function') {
+        initializeDepartmentEditor();
     }
 
     checkViewMode();
