@@ -1,10 +1,28 @@
 # 組織図管理システム - 作業進捗メモ
 
-## 最終更新: 2026-01-26 07:30
+## 最終更新: 2026-01-26 08:15
 
 ---
 
 ## ✅ 2026-01-26 実装完了
+
+### 3. ツリー線接続修正（08:15）
+
+**問題**: 部署追加・名前変更後にツリーの線が繋がらなくなる
+
+**原因**:
+1. 子部署が`sort_order`順にソートされていなかった
+2. CSSの水平線が全幅をカバーしていなかった
+
+**修正内容**:
+- `tree-view.js`: 子部署の`sort_order`ソート追加
+- `card-view.js`: 子部署の`sort_order`ソート追加（2箇所）
+- `app.js`: 最上位部署の`sort_order`ソート追加（カード表示・PDF出力）
+- `index.html`: ツリー線CSS改善
+  - 水平線を全幅に拡張（`left: 0; right: 0`）
+  - 各子部署に垂直接続線を追加
+
+### 2. 部署インライン編集 & 右クリックメニュー（07:30）
 
 ### 1. ドラッグ＆ドロップ修正（06:55）
 
@@ -63,9 +81,11 @@ executeQuickAddDepartment(parentId)
 |---------|----------|------|
 | `js/auth.js` | 06:55 | ALLOW_ANONYMOUS_EDIT追加 |
 | `js/drag-drop.js` | 06:55 | window参照修正 |
-| `js/app.js` | 07:30 | department-editor初期化追加 |
+| `js/app.js` | 08:15 | department-editor初期化 + sort_orderソート |
 | `js/department-editor.js` | 07:30 | 新規作成 |
-| `index.html` | 07:30 | スクリプト追加 |
+| `js/views/tree-view.js` | 08:15 | sort_orderソート追加 |
+| `js/views/card-view.js` | 08:15 | sort_orderソート追加 |
+| `index.html` | 08:15 | ツリー線CSS改善 |
 
 ---
 
@@ -109,6 +129,7 @@ executeQuickAddDepartment(parentId)
 
 ## 今後のタスク
 
+- [x] ツリー線が繋がらない問題の修正（2026-01-26 08:15完了）
 - [ ] コンソールエラー（401/400）の調査・修正
 - [ ] Google OAuth設定後、`ALLOW_ANONYMOUS_EDIT: false`に変更
 - [ ] デバッグログの削除（本番運用前）
