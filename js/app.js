@@ -138,7 +138,7 @@ async function loadData() {
         changeHistory = historyData || [];
 
         // 役職データの読み込み（Phase 3.5対応）
-        const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?is_active=eq.true&order=display_order`, {
+        const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?is_active=eq.true&order=level.desc,display_order.asc`, {
             headers: {
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
                 'apikey': SUPABASE_ANON_KEY,
@@ -2866,6 +2866,13 @@ if (_originalOpenModal) {
         _originalOpenModal(modalId);
     };
 }
+
+// グローバルエクスポート（他モジュールから呼び出し可能にする）
+window.showConfirmModal = showConfirmModal;
+window.showConfirmModalCallback = showConfirmModalCallback;
+window.loadData = loadData;
+window.employees = employees;
+window.departments = departments;
 
 // ページ読み込み完了時の初期化（ファイル末尾に配置）
 document.addEventListener('DOMContentLoaded', async () => {
