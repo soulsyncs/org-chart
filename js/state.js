@@ -23,6 +23,7 @@ let viewMode = 'view'; // 'edit' or 'view' - デフォルトは閲覧モード�
 
 // スキーマ拡張フラグ
 let hasChatworkAccountIdColumn = false;
+let hasGoogleAccountEmailColumn = false;  // Google Drive権限管理用
 
 // 兼務部署カウンター
 let additionalDeptCounter = 0;
@@ -247,6 +248,7 @@ window.roles = roles;
 window.currentViewMode = currentViewMode;
 window.viewMode = viewMode;
 window.hasChatworkAccountIdColumn = hasChatworkAccountIdColumn;
+window.hasGoogleAccountEmailColumn = hasGoogleAccountEmailColumn;
 window.additionalDeptCounter = additionalDeptCounter;
 window.currentDetailEmployeeId = currentDetailEmployeeId;
 

@@ -9,8 +9,8 @@
 
 // スキーマチェック関数
 async function checkSchemaExtensions() {
+    // chatwork_account_id カラム確認
     try {
-        // 1件取得してカラム存在を確認
         const response = await fetch(`${SUPABASE_REST_URL}/employees?select=chatwork_account_id&limit=1`, {
             headers: {
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
@@ -23,6 +23,22 @@ async function checkSchemaExtensions() {
         }
     } catch (e) {
         if (typeof debugLog === 'function') debugLog('ℹ️ chatwork_account_id column not yet added');
+    }
+
+    // google_account_email カラム確認（Google Drive権限管理用）
+    try {
+        const response = await fetch(`${SUPABASE_REST_URL}/employees?select=google_account_email&limit=1`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
+            }
+        });
+        if (response.ok) {
+            window.hasGoogleAccountEmailColumn = true;
+            if (typeof debugLog === 'function') debugLog('✅ google_account_email column detected');
+        }
+    } catch (e) {
+        if (typeof debugLog === 'function') debugLog('ℹ️ google_account_email column not yet added');
     }
 }
 
@@ -495,7 +511,12 @@ async function addEmployee(event) {
     if (window.hasChatworkAccountIdColumn) {
         employeeData.chatwork_account_id = document.getElementById('empChatworkId').value || null;
     }
-    
+
+    // Google Drive権限管理: google_account_emailカラムが存在する場合のみ追加
+    if (window.hasGoogleAccountEmailColumn) {
+        employeeData.google_account_email = document.getElementById('empGoogleAccountEmail').value || null;
+    }
+
     // 誕生日をGoogle Calendarに同期
     if (employeeData.birthday) {
         await syncBirthdayToGoogleCalendar(employeeData.name, employeeData.birthday);
@@ -1192,7 +1213,13 @@ function editEmployee(empId) {
     if (editChatworkIdInput) {
         editChatworkIdInput.value = employee.chatwork_account_id || '';
     }
-    
+
+    // Googleアカウント（Drive権限管理）
+    const editGoogleAccountEmailInput = document.getElementById('editEmpGoogleAccountEmail');
+    if (editGoogleAccountEmailInput) {
+        editGoogleAccountEmailInput.value = employee.google_account_email || '';
+    }
+
     // スキル・資格の表示
     try {
         const skills = JSON.parse(employee.skills || '[]');
@@ -1316,7 +1343,12 @@ async function updateEmployee(event) {
     if (window.hasChatworkAccountIdColumn) {
         updatedEmployee.chatwork_account_id = document.getElementById('editEmpChatworkId').value || null;
     }
-    
+
+    // Google Drive権限管理: google_account_emailカラムが存在する場合のみ追加
+    if (window.hasGoogleAccountEmailColumn) {
+        updatedEmployee.google_account_email = document.getElementById('editEmpGoogleAccountEmail').value || null;
+    }
+
     // 誕生日をGoogle Calendarに同期
     if (updatedEmployee.birthday && updatedEmployee.birthday !== beforeData.birthday) {
         await syncBirthdayToGoogleCalendar(updatedEmployee.name, updatedEmployee.birthday);
