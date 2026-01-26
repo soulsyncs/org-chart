@@ -34,14 +34,27 @@ async function checkSchemaExtensions() {
 function checkViewMode() {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
-    
+
+    // URLパラメータで明示的にviewモードが指定された場合のみ
     if (mode === 'view') {
         window.viewMode = 'view';
-        // 閲覧専用モードのスタイルを適用
         document.body.classList.add('view-only-mode');
         showNotification('閲覧専用モードで表示しています', 'info');
+        applyViewModeStyles();
+        return;
     }
-    
+
+    // 認証済みの管理者/編集者は編集モードのまま
+    if (typeof hasPermission === 'function' && hasPermission('editor')) {
+        window.viewMode = 'edit';
+        // バッジ・スタイルを削除
+        const existingBadge = document.querySelector('.view-only-badge');
+        if (existingBadge) existingBadge.remove();
+        document.body.classList.remove('view-only-mode');
+        return;
+    }
+
+    // それ以外は閲覧モード
     applyViewModeStyles();
 }
 
@@ -52,83 +65,29 @@ function applyViewModeStyles() {
     if (existingStyle) existingStyle.remove();
     document.body.classList.remove('view-only-mode');
 
+    // 閲覧専用バッジを削除
+    const existingBadge = document.querySelector('.view-only-badge');
+    if (existingBadge) existingBadge.remove();
+
     if (window.viewMode === 'view') {
         // bodyにクラスを追加
         document.body.classList.add('view-only-mode');
 
-        // 編集ボタンを全て非表示にするCSS
+        // 編集ボタンのみ非表示にするCSS（詳細表示は許可）
         const style = document.createElement('style');
         style.id = 'view-only-styles';
         style.textContent = `
-            /* 編集系ボタンを全て非表示 */
-            .view-only-mode button[class*="bg-red"],
-            .view-only-mode button[class*="bg-blue"],
-            .view-only-mode button[class*="bg-green"],
-            .view-only-mode button[class*="bg-yellow"],
-            .view-only-mode button[class*="bg-orange"],
-            .view-only-mode button[class*="bg-teal"],
-            .view-only-mode [onclick*="Add"],
-            .view-only-mode [onclick*="add"],
-            .view-only-mode [onclick*="Edit"],
-            .view-only-mode [onclick*="edit"],
-            .view-only-mode [onclick*="Delete"],
-            .view-only-mode [onclick*="delete"],
-            .view-only-mode [onclick*="Move"],
-            .view-only-mode [onclick*="move"],
-            .view-only-mode [onclick*="Import"],
-            .view-only-mode [onclick*="import"],
-            .view-only-mode [onclick*="sync"],
-            .view-only-mode [onclick*="Sync"] {
-                display: none !important;
-            }
-
-            /* 許可するボタン（閲覧系）を再表示 */
-            .view-only-mode button[onclick*="refresh"],
-            .view-only-mode button[onclick*="Refresh"],
-            .view-only-mode button[onclick*="export"],
-            .view-only-mode button[onclick*="Export"],
-            .view-only-mode button[onclick*="pdf"],
-            .view-only-mode button[onclick*="PDF"],
-            .view-only-mode button[onclick*="filter"],
-            .view-only-mode button[onclick*="Filter"],
-            .view-only-mode button[onclick*="search"],
-            .view-only-mode button[onclick*="Search"],
-            .view-only-mode button[onclick*="view"],
-            .view-only-mode button[onclick*="View"],
-            .view-only-mode button[onclick*="close"],
-            .view-only-mode button[onclick*="Close"],
-            .view-only-mode button[onclick*="setViewMode"],
-            .view-only-mode button[class*="bg-gray"] {
-                display: inline-flex !important;
-            }
-
-            /* モーダル内の編集・削除ボタンを非表示 */
-            .view-only-mode .modal button:not([onclick*="close"]):not([onclick*="Close"]) {
-                display: none !important;
-            }
-            .view-only-mode .modal button[onclick*="close"],
-            .view-only-mode .modal button[onclick*="Close"],
-            .view-only-mode .modal button:contains("閉じる") {
-                display: inline-flex !important;
-            }
-
-            /* ヘッダーをグレーに */
-            .view-only-mode header {
-                background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%) !important;
-            }
-
             /* ドラッグ&ドロップを無効化 */
             .view-only-mode [draggable="true"] {
-                pointer-events: none;
                 cursor: default;
             }
         `;
         document.head.appendChild(style);
 
-        // JavaScriptでボタンを直接非表示（より確実）
+        // JavaScriptでボタンを直接非表示（より確実・柔軟）
         hideEditButtons();
 
-        // ヘッダーに閲覧専用バッジを追加
+        // ヘッダーに閲覧専用バッジを追加（ヘッダー色は変えない）
         setTimeout(() => {
             const header = document.querySelector('header h1');
             if (header && !header.querySelector('.view-only-badge')) {
@@ -142,20 +101,18 @@ function applyViewModeStyles() {
     }
 }
 
-// 編集ボタンを直接非表示にする
+// 編集ボタンを直接非表示にする（ヘッダー部分のアクションボタンのみ）
 function hideEditButtons() {
     if (window.viewMode !== 'view') return;
 
-    // テキストで編集系ボタンを検索して非表示
-    const editKeywords = ['追加', '編集', '削除', '異動', '同期', 'インポート'];
-    const allowKeywords = ['閉じる', 'エクスポート', 'PDF', '統計', '監査', '品質', '変更履歴', 'Chatwork', '閲覧'];
+    // ヘッダー部分のアクションボタンのみ対象
+    const editKeywords = ['社員を追加', '部署を追加', '異動', 'ソウルくんに同期', 'インポート'];
 
-    document.querySelectorAll('button').forEach(btn => {
+    document.querySelectorAll('header button, .action-buttons button').forEach(btn => {
         const text = btn.textContent || '';
         const isEditButton = editKeywords.some(keyword => text.includes(keyword));
-        const isAllowedButton = allowKeywords.some(keyword => text.includes(keyword));
 
-        if (isEditButton && !isAllowedButton) {
+        if (isEditButton) {
             btn.style.display = 'none';
         }
     });
@@ -2385,12 +2342,14 @@ function showEmployeeDetail(empId) {
         <div class="border-t border-gray-200 my-4"></div>
         
         <div class="flex gap-3 justify-center">
-            <button onclick="editEmployeeFromDetail()" class="btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition">
-                <i class="fas fa-edit mr-2"></i>編集
-            </button>
-            <button onclick="confirmDeleteEmployeeFromDetail()" class="btn bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition">
-                <i class="fas fa-trash mr-2"></i>削除
-            </button>
+            ${(typeof hasPermission === 'function' && hasPermission('editor')) ? `
+                <button onclick="editEmployeeFromDetail()" class="btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    <i class="fas fa-edit mr-2"></i>編集
+                </button>
+                <button onclick="confirmDeleteEmployeeFromDetail()" class="btn bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    <i class="fas fa-trash mr-2"></i>削除
+                </button>
+            ` : ''}
             <button onclick="closeModal('employeeDetailModal')" class="btn bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold transition">
                 閉じる
             </button>
