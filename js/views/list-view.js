@@ -280,4 +280,6 @@ window.renderFilteredListView = renderFilteredListView;
 window.escapeHtmlForList = escapeHtmlForList;
 window.getListViewData = getListViewData;
 
-console.log('✅ views/list-view.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('views/list-view.js');
+}

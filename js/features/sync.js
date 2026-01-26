@@ -153,7 +153,7 @@ function buildMappedRoles() {
                 level: r.level,
                 description: r.description || null
             }));
-        console.log('Using roles from Supabase table:', mappedRoles.length, 'roles');
+        if (typeof debugLog === 'function') debugLog('Using roles from Supabase table:', mappedRoles.length, 'roles');
     } else {
         // フォールバック: 従来のposition抽出方式
         console.warn('roles table not available, falling back to position extraction');
@@ -268,4 +268,6 @@ window.updateLastSyncedText = updateLastSyncedText;
 window.saveApiToken = saveApiToken;
 window.getApiToken = getApiToken;
 
-console.log('✅ features/sync.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('features/sync.js');
+}

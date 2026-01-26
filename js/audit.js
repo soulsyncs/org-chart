@@ -918,4 +918,6 @@ window.confirmRollback = confirmRollback;
 window.logEmployeeAction = logEmployeeAction;
 window.logDepartmentAction = logDepartmentAction;
 
-console.log('✅ audit.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('audit.js');
+}

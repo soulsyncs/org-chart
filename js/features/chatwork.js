@@ -101,7 +101,7 @@ async function sendChatworkNotification(message) {
         });
 
         if (response.ok) {
-            console.log('Chatwork通知送信成功');
+            if (typeof debugLog === 'function') debugLog('Chatwork通知送信成功');
             return true;
         }
     } catch (error) {
@@ -196,4 +196,6 @@ window.notifyEmployeeTransferred = notifyEmployeeTransferred;
 window.notifyEmployeeDeleted = notifyEmployeeDeleted;
 window.notifyDepartmentAdded = notifyDepartmentAdded;
 
-console.log('✅ features/chatwork.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('features/chatwork.js');
+}

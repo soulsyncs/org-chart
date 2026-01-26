@@ -277,4 +277,8 @@ window.getEmployeesByDepartment = getEmployeesByDepartment;
 window.getChildDepartments = getChildDepartments;
 window.getTopLevelDepartments = getTopLevelDepartments;
 
-console.log('✅ state.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('state.js');
+} else if (window.FEATURE_FLAGS && window.FEATURE_FLAGS.DEBUG_MODE) {
+    console.log('✅ state.js loaded');
+}

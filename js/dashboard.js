@@ -435,7 +435,7 @@ function showSyncDiffModal(diff) {
  */
 function initializePhase6() {
     if (FEATURE_FLAGS.ENABLE_DASHBOARD || FEATURE_FLAGS.ENABLE_SYNC_PREVIEW) {
-        console.log('✅ Phase 6: Dashboard initialized');
+        if (typeof debugLog === 'function') debugLog('✅ Phase 6: Dashboard initialized');
     }
 }
 
@@ -453,4 +453,6 @@ window.previewSyncDiff = previewSyncDiff;
 window.showSyncDiffModal = showSyncDiffModal;
 window.initializePhase6 = initializePhase6;
 
-console.log('✅ dashboard.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('dashboard.js');
+}

@@ -529,4 +529,6 @@ window.sortEmployeesByDepartmentOrder = sortEmployeesByDepartmentOrder;
 window.getEmployeeCountInDepartment = getEmployeeCountInDepartment;
 window.getConcurrentPosition = getConcurrentPosition;
 
-console.log('✅ views/card-view.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('views/card-view.js');
+}

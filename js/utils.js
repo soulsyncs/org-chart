@@ -396,6 +396,30 @@ function readFile(file) {
 }
 
 // ============================================
+// デバッグログ（本番環境では出力しない）
+// ============================================
+
+/**
+ * デバッグログを出力（DEBUG_MODE時のみ）
+ * @param  {...any} args - ログ引数
+ */
+function debugLog(...args) {
+    if (window.FEATURE_FLAGS && window.FEATURE_FLAGS.DEBUG_MODE) {
+        console.log(...args);
+    }
+}
+
+/**
+ * モジュールロード確認ログ（DEBUG_MODE時のみ）
+ * @param {string} moduleName - モジュール名
+ */
+function logModuleLoaded(moduleName) {
+    if (window.FEATURE_FLAGS && window.FEATURE_FLAGS.DEBUG_MODE) {
+        console.log(`✅ ${moduleName} loaded`);
+    }
+}
+
+// ============================================
 // 通知（audit.js, dashboard.jsより先に必要）
 // ============================================
 
@@ -496,5 +520,10 @@ window.removeFromStorage = removeFromStorage;
 window.copyToClipboard = copyToClipboard;
 window.downloadFile = downloadFile;
 window.readFile = readFile;
+window.debugLog = debugLog;
+window.logModuleLoaded = logModuleLoaded;
 
-console.log('✅ utils.js loaded');
+// utils.jsは最初に読み込まれるため、直接出力
+if (typeof FEATURE_FLAGS !== 'undefined' && FEATURE_FLAGS.DEBUG_MODE) {
+    console.log('✅ utils.js loaded');
+}

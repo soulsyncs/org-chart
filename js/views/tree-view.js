@@ -94,23 +94,23 @@ function createTreeNodeCompact(dept) {
         deptBox.classList.remove('drag-over');
 
         const employeeId = e.dataTransfer.getData('text/plain');
-        console.log('📦 Drop event:', { employeeId, targetDept: dept.name, deptId: dept.id });
+        if (typeof debugLog === 'function') debugLog('📦 Drop event:', { employeeId, targetDept: dept.name, deptId: dept.id });
         if (!employeeId) return;
 
         // 既にこの部署の社員かチェック
         const employee = (window.employees || employees).find(emp => emp.id === employeeId);
-        console.log('📋 Found employee:', employee ? employee.name : 'NOT FOUND', 'Current dept:', employee?.department_id, 'Target:', dept.id);
+        if (typeof debugLog === 'function') debugLog('📋 Found employee:', employee ? employee.name : 'NOT FOUND', 'Current dept:', employee?.department_id, 'Target:', dept.id);
 
         if (employee && employee.department_id === dept.id) {
-            console.log('⏭️ Same department, skipping');
+            if (typeof debugLog === 'function') debugLog('⏭️ Same department, skipping');
             return; // 同じ部署なのでスキップ
         }
 
-        console.log('🔄 Calling moveEmployeeToDepartment...');
+        if (typeof debugLog === 'function') debugLog('🔄 Calling moveEmployeeToDepartment...');
         if (typeof handleEnhancedDrop === 'function' && FEATURE_FLAGS && FEATURE_FLAGS.ENABLE_SHIFT_DROP_CONCURRENT) {
             await handleEnhancedDrop(e, dept.id);
         } else if (typeof moveEmployeeToDepartment === 'function') {
-            console.log('✅ moveEmployeeToDepartment exists, calling...');
+            if (typeof debugLog === 'function') debugLog('✅ moveEmployeeToDepartment exists, calling...');
             await moveEmployeeToDepartment(employeeId, dept.id);
         }
     });
@@ -230,18 +230,18 @@ function showDepartmentDetail(deptId) {
  * @param {string} targetDeptId - 移動先部署ID
  */
 async function moveEmployeeToDepartment(employeeId, targetDeptId) {
-    console.log('🚚 moveEmployeeToDepartment called:', { employeeId, targetDeptId });
+    if (typeof debugLog === 'function') debugLog('🚚 moveEmployeeToDepartment called:', { employeeId, targetDeptId });
 
     // window経由でグローバル変数にアクセス
     const empArray = window.employees || employees;
     const deptArray = window.departments || departments;
 
-    console.log('📊 Data available:', { employees: empArray.length, departments: deptArray.length });
+    if (typeof debugLog === 'function') debugLog('📊 Data available:', { employees: empArray.length, departments: deptArray.length });
 
     const employee = empArray.find(e => e.id === employeeId);
     const targetDept = deptArray.find(d => d.id === targetDeptId);
 
-    console.log('🔍 Found:', { employee: employee?.name, targetDept: targetDept?.name });
+    if (typeof debugLog === 'function') debugLog('🔍 Found:', { employee: employee?.name, targetDept: targetDept?.name });
 
     if (!employee || !targetDept) {
         console.error('❌ Employee or department not found!');
@@ -257,8 +257,8 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
 
     const currentDept = deptArray.find(d => d.id === employee.department_id);
 
-    console.log('💬 Showing confirmation modal...');
-    console.log('📌 showConfirmModal available:', typeof showConfirmModal);
+    if (typeof debugLog === 'function') debugLog('💬 Showing confirmation modal...');
+    if (typeof debugLog === 'function') debugLog('📌 showConfirmModal available:', typeof showConfirmModal);
 
     // 確認モーダル
     const confirmMsg = `
@@ -273,8 +273,8 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
         </div>
     `;
 
-    console.log('⏳ Calling showConfirmModal...');
-    console.log('📌 window.showConfirmModal available:', typeof window.showConfirmModal);
+    if (typeof debugLog === 'function') debugLog('⏳ Calling showConfirmModal...');
+    if (typeof debugLog === 'function') debugLog('📌 window.showConfirmModal available:', typeof window.showConfirmModal);
 
     if (typeof window.showConfirmModal !== 'function') {
         console.error('❌ showConfirmModal is not available!');
@@ -283,9 +283,9 @@ async function moveEmployeeToDepartment(employeeId, targetDeptId) {
     }
 
     const result = await window.showConfirmModal(confirmMsg);
-    console.log('✅ Confirmation result:', result);
+    if (typeof debugLog === 'function') debugLog('✅ Confirmation result:', result);
     if (!result) {
-        console.log('❌ User cancelled');
+        if (typeof debugLog === 'function') debugLog('❌ User cancelled');
         return;
     }
 
@@ -373,4 +373,6 @@ window.createTreeEmployeeItem = createTreeEmployeeItem;
 window.showDepartmentDetail = showDepartmentDetail;
 window.moveEmployeeToDepartment = moveEmployeeToDepartment;
 
-console.log('✅ views/tree-view.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('views/tree-view.js');
+}

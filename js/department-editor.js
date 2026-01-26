@@ -98,7 +98,7 @@ let contextMenuState = {
  * ページ読み込み時に呼び出す
  */
 function initializeDepartmentEditor() {
-    console.log('🔧 Initializing Department Editor...');
+    if (typeof debugLog === 'function') debugLog('🔧 Initializing Department Editor...');
 
     // コンテキストメニューのHTML要素を作成
     createContextMenuElement();
@@ -109,7 +109,7 @@ function initializeDepartmentEditor() {
     // グローバルイベントリスナーを設定
     setupGlobalEventListeners();
 
-    console.log('✅ Department Editor initialized');
+    if (typeof debugLog === 'function') debugLog('✅ Department Editor initialized');
 }
 
 /**
@@ -542,7 +542,7 @@ function showContextMenu(e, departmentId) {
 
     contextMenuState.isVisible = true;
 
-    console.log('📋 Context menu shown for department:', department.name);
+    if (typeof debugLog === 'function') debugLog('📋 Context menu shown for department:', department.name);
 }
 
 /**
@@ -572,7 +572,7 @@ function handleContextMenuAction(action) {
         return;
     }
 
-    console.log(`🎯 Context menu action: ${action} for department: ${dept.name}`);
+    if (typeof debugLog === 'function') debugLog(`🎯 Context menu action: ${action} for department: ${dept.name}`);
 
     switch (action) {
         case 'addSiblingDepartment':
@@ -660,7 +660,7 @@ function startInlineEditForDepartment(departmentId) {
  * @param {string} currentName - 現在の部署名
  */
 function startInlineEdit(targetElement, departmentId, currentName) {
-    console.log('✏️ Starting inline edit for:', currentName);
+    if (typeof debugLog === 'function') debugLog('✏️ Starting inline edit for:', currentName);
 
     // 状態を更新
     currentEditState.isEditing = true;
@@ -767,7 +767,7 @@ async function saveInlineEdit() {
         return;
     }
 
-    console.log(`💾 Saving department name change: "${originalName}" → "${newName}"`);
+    if (typeof debugLog === 'function') debugLog(`💾 Saving department name change: "${originalName}" → "${newName}"`);
 
     // UIを復元（保存中表示）
     restoreOriginalElement(newName + ' (保存中...)');
@@ -792,7 +792,7 @@ async function saveInlineEdit() {
         }
 
         const updatedData = await response.json();
-        console.log('✅ Department updated:', updatedData);
+        if (typeof debugLog === 'function') debugLog('✅ Department updated:', updatedData);
 
         // 変更履歴を記録
         const deptArray = window.departments || departments;
@@ -851,7 +851,7 @@ function cancelInlineEdit() {
         return;
     }
 
-    console.log('❌ Inline edit cancelled');
+    if (typeof debugLog === 'function') debugLog('❌ Inline edit cancelled');
 
     // 元の表示に戻す
     restoreOriginalElement(currentEditState.originalName);
@@ -980,7 +980,7 @@ function showQuickAddDepartmentModal(parentId, referenceDept) {
     // フォーカス
     setTimeout(() => input.focus(), 100);
 
-    console.log(`📝 Quick add modal shown (parentId: ${parentId || 'null'}, type: ${addTypeText})`);
+    if (typeof debugLog === 'function') debugLog(`📝 Quick add modal shown (parentId: ${parentId || 'null'}, type: ${addTypeText})`);
 }
 
 /**
@@ -1018,7 +1018,7 @@ async function executeQuickAddDepartment(parentId) {
         return;
     }
 
-    console.log(`➕ Adding department: "${name}" (parent: ${parentId || 'null'})`);
+    if (typeof debugLog === 'function') debugLog(`➕ Adding department: "${name}" (parent: ${parentId || 'null'})`);
 
     // モーダルを閉じる
     closeQuickAddModal();
@@ -1054,7 +1054,7 @@ async function executeQuickAddDepartment(parentId) {
         }
 
         const newDept = await response.json();
-        console.log('✅ Department added:', newDept);
+        if (typeof debugLog === 'function') debugLog('✅ Department added:', newDept);
 
         // 変更履歴を記録
         if (typeof window.addChangeHistory === 'function') {
@@ -1103,7 +1103,7 @@ async function executeQuickAddDepartment(parentId) {
  * ビューがレンダリングされた後に呼び出す
  */
 function attachDepartmentEditorEvents() {
-    console.log('🔗 Attaching department editor events...');
+    if (typeof debugLog === 'function') debugLog('🔗 Attaching department editor events...');
 
     // ツリービューの部署ボックス
     document.querySelectorAll('.tree-dept-box-compact').forEach(box => {
@@ -1150,7 +1150,7 @@ function attachDepartmentEditorEvents() {
         }
     });
 
-    console.log('✅ Department editor events attached');
+    if (typeof debugLog === 'function') debugLog('✅ Department editor events attached');
 }
 
 // ============================================
@@ -1195,4 +1195,6 @@ window.executeQuickAddDepartment = executeQuickAddDepartment;
 // イベント設定
 window.attachDepartmentEditorEvents = attachDepartmentEditorEvents;
 
-console.log('✅ department-editor.js loaded');
+if (typeof logModuleLoaded === 'function') {
+    logModuleLoaded('department-editor.js');
+}

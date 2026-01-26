@@ -19,10 +19,10 @@ async function checkSchemaExtensions() {
         });
         if (response.ok) {
             window.hasChatworkAccountIdColumn = true;
-            console.log('✅ chatwork_account_id column detected');
+            if (typeof debugLog === 'function') debugLog('✅ chatwork_account_id column detected');
         }
     } catch (e) {
-        console.log('ℹ️ chatwork_account_id column not yet added');
+        if (typeof debugLog === 'function') debugLog('ℹ️ chatwork_account_id column not yet added');
     }
 }
 
@@ -139,11 +139,11 @@ async function loadData() {
                 changeHistory = Array.isArray(historyData) ? historyData : [];
             } else {
                 // テーブルが存在しない場合などはエラーを無視
-                console.log('change_history table not available, skipping...');
+                if (typeof debugLog === 'function') debugLog('change_history table not available, skipping...');
                 changeHistory = [];
             }
         } catch (err) {
-            console.log('change_history load skipped:', err.message);
+            if (typeof debugLog === 'function') debugLog('change_history load skipped:', err.message);
             changeHistory = [];
         }
 
@@ -158,13 +158,13 @@ async function loadData() {
             if (rolesResponse.ok) {
                 const rolesData = await rolesResponse.json();
                 roles = Array.isArray(rolesData) ? rolesData : [];
-                console.log('Loaded roles:', roles.length, 'items');
+                if (typeof debugLog === 'function') debugLog('Loaded roles:', roles.length, 'items');
             } else {
-                console.log('roles table not available, skipping...');
+                if (typeof debugLog === 'function') debugLog('roles table not available, skipping...');
                 roles = [];
             }
         } catch (err) {
-            console.log('roles load skipped:', err.message);
+            if (typeof debugLog === 'function') debugLog('roles load skipped:', err.message);
             roles = [];
         }
 
@@ -763,14 +763,20 @@ async function confirmDeleteDepartment(deptId) {
 
 // 変更履歴の追加
 async function addChangeHistory(actionType, targetType, targetId, beforeData, afterData, description) {
+    // target_idがオブジェクトの場合はIDを取得
+    let resolvedTargetId = targetId;
+    if (targetId && typeof targetId === 'object') {
+        resolvedTargetId = targetId.id || null;
+    }
+
     const historyData = {
-        id: generateId('hist'),
-        action_type: actionType,
+        // id は自動生成（uuid）
+        operation: actionType,  // テーブルのカラム名に合わせる
         target_type: targetType,
-        target_id: targetId,
-        before_data: beforeData ? JSON.stringify(beforeData) : '',
-        after_data: afterData ? JSON.stringify(afterData) : '',
-        description: description,
+        target_id: resolvedTargetId,
+        before_data: beforeData ? JSON.stringify(beforeData) : null,
+        after_data: afterData ? JSON.stringify(afterData) : null,
+        description: description || null,
         timestamp: new Date().toISOString()
     };
 
@@ -1999,7 +2005,7 @@ async function syncBirthdayToGoogleCalendar(name, birthday) {
     // 1. Google Calendarに直接追加するリンクを生成
     // 2. iCalendarファイル(.ics)をダウンロード可能にする
     
-    console.log(`誕生日登録: ${name} - ${birthday}`);
+    if (typeof debugLog === 'function') debugLog(`誕生日登録: ${name} - ${birthday}`);
     
     // 通知で、ユーザーに選択肢を提示
     const year = new Date(birthday).getFullYear();
@@ -2930,7 +2936,7 @@ window.departments = departments;
 
 // ページ読み込み完了時の初期化（ファイル末尾に配置）
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOMContentLoaded: JavaScript is fully loaded');
+    if (typeof debugLog === 'function') debugLog('DOMContentLoaded: JavaScript is fully loaded');
 
     // Phase 2: 認証初期化（URLパラメータより先に実行）
     if (typeof initializeAuth === 'function') {

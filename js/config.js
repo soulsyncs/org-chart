@@ -108,4 +108,7 @@ window.FEATURE_FLAGS = FEATURE_FLAGS;
 window.ORG_CONFIG = ORG_CONFIG;
 window.UI_CONFIG = UI_CONFIG;
 
-console.log('✅ config.js loaded (Environment:', ENV.isDevelopment ? 'Development' : 'Production', ')');
+// config.jsはutils.jsより先に読み込まれる可能性があるため、直接チェック
+if (FEATURE_FLAGS.DEBUG_MODE) {
+    console.log('✅ config.js loaded (Environment:', ENV.isDevelopment ? 'Development' : 'Production', ')');
+}

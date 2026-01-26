@@ -262,16 +262,16 @@ async function executeConcurrentAdd(employeeId, targetDeptId) {
  * @param {string} targetDeptId - ドロップ先部署ID
  */
 async function handleEnhancedDrop(e, targetDeptId) {
-    console.log('🎯 handleEnhancedDrop called:', { targetDeptId });
+    if (typeof debugLog === 'function') debugLog('🎯 handleEnhancedDrop called:', { targetDeptId });
     e.preventDefault();
 
     const employeeId = e.dataTransfer.getData('text/plain');
-    console.log('📝 Employee ID from dataTransfer:', employeeId);
+    if (typeof debugLog === 'function') debugLog('📝 Employee ID from dataTransfer:', employeeId);
     if (!employeeId) return;
 
     // 権限チェック（開発中は一時的にスキップ）
     const hasEditorPermission = typeof hasPermission === 'function' ? hasPermission('editor') : true;
-    console.log('🔐 Permission check:', { hasPermission: typeof hasPermission, hasEditorPermission });
+    if (typeof debugLog === 'function') debugLog('🔐 Permission check:', { hasPermission: typeof hasPermission, hasEditorPermission });
     if (!hasEditorPermission) {
         showNotification('この操作には編集権限が必要です', 'warning');
         return;
@@ -279,22 +279,22 @@ async function handleEnhancedDrop(e, targetDeptId) {
 
     // viewModeチェック
     const currentViewMode = window.viewMode || viewMode || 'edit';
-    console.log('👁️ ViewMode check:', { viewMode, windowViewMode: window.viewMode, currentViewMode });
+    if (typeof debugLog === 'function') debugLog('👁️ ViewMode check:', { viewMode, windowViewMode: window.viewMode, currentViewMode });
     if (currentViewMode !== 'edit') {
         showNotification('閲覧モードでは移動できません', 'info');
         return;
     }
 
-    console.log('✅ All checks passed, proceeding with move...');
+    if (typeof debugLog === 'function') debugLog('✅ All checks passed, proceeding with move...');
 
     // Shiftキーで兼務追加
     if (FEATURE_FLAGS.ENABLE_SHIFT_DROP_CONCURRENT && e.shiftKey) {
-        console.log('🔀 Shift key detected, adding concurrent department');
+        if (typeof debugLog === 'function') debugLog('🔀 Shift key detected, adding concurrent department');
         await addConcurrentDepartment(employeeId, targetDeptId);
     } else {
         // 通常の移動
-        console.log('➡️ Normal move, calling moveEmployeeToDepartment');
-        console.log('📌 window.moveEmployeeToDepartment available:', typeof window.moveEmployeeToDepartment);
+        if (typeof debugLog === 'function') debugLog('➡️ Normal move, calling moveEmployeeToDepartment');
+        if (typeof debugLog === 'function') debugLog('📌 window.moveEmployeeToDepartment available:', typeof window.moveEmployeeToDepartment);
 
         if (typeof window.moveEmployeeToDepartment !== 'function') {
             console.error('❌ moveEmployeeToDepartment is not available!');
@@ -303,7 +303,7 @@ async function handleEnhancedDrop(e, targetDeptId) {
         }
 
         await window.moveEmployeeToDepartment(employeeId, targetDeptId);
-        console.log('✅ moveEmployeeToDepartment completed');
+        if (typeof debugLog === 'function') debugLog('✅ moveEmployeeToDepartment completed');
     }
 
     // ドラッグ状態をリセット
@@ -490,14 +490,14 @@ function injectPhase4Styles() {
  */
 function initializePhase4() {
     if (!FEATURE_FLAGS.ENABLE_SHIFT_DROP_CONCURRENT) {
-        console.log('ℹ️ Shift+Drop concurrent mode disabled by feature flag');
+        if (typeof debugLog === 'function') debugLog('ℹ️ Shift+Drop concurrent mode disabled by feature flag');
         return;
     }
 
     injectPhase4Styles();
     setupDragDropKeyListeners();
 
-    console.log('✅ Phase 4: Drag & Drop enhancements initialized');
+    if (typeof debugLog === 'function') debugLog('✅ Phase 4: Drag & Drop enhancements initialized');
 }
 
 // ============================================

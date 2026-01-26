@@ -383,7 +383,7 @@ function createEnhancedTreeEmployeeItem(emp, currentDeptId) {
 
     // ドラッグイベント
     empItem.addEventListener('dragstart', (e) => {
-        console.log('🚀 Drag started:', emp.name, emp.id);
+        if (typeof debugLog === 'function') debugLog('🚀 Drag started:', emp.name, emp.id);
         empItem.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/plain', emp.id);
@@ -500,7 +500,7 @@ function injectPhase3Styles() {
  */
 function initializePhase3() {
     injectPhase3Styles();
-    console.log('✅ Phase 3: Tree enhancements initialized');
+    if (typeof debugLog === 'function') debugLog('✅ Phase 3: Tree enhancements initialized');
 }
 
 // ============================================
