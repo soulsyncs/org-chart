@@ -237,9 +237,25 @@
             content: '';
             position: absolute;
             top: 0;
-            left: 15%;
-            right: 15%;
+            left: 0;
+            right: 0;
             height: 1px;
+            background: #d1d5db;
+        }
+
+        /* 子部署間の垂直接続線 */
+        .tree-children-compact > .tree-node-compact {
+            position: relative;
+        }
+
+        .tree-children-compact > .tree-node-compact::before {
+            content: '';
+            position: absolute;
+            top: -0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1px;
+            height: 0.5rem;
             background: #d1d5db;
         }
         
@@ -744,13 +760,16 @@
     <header style="background: white; border-bottom: 4px solid #E74C3C;" class="shadow-lg">
         <div class="container mx-auto px-4 py-4 lg:py-6">
             <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-3 lg:gap-4">
+                <div class="flex items-center gap-3 flex-shrink-0">
                     <!-- Soul Sync's Logo（画像） -->
-                    <img src="images/soul-syncs-logo.png" alt="Soul Sync's" style="height: 20px; width: auto;" class="flex-shrink-0">
-                    <div class="text-center lg:text-left">
-                        <h1 class="text-xl lg:text-3xl font-bold" style="font-family: 'Segoe UI', serif; letter-spacing: 0.5px; color: #1a1a1a;">組織図管理システム</h1>
-                    </div>
+                    <img src="images/soul-syncs-logo.png" alt="Soul Sync's" style="height: 36px; width: auto;" class="flex-shrink-0">
+                    <h1 class="text-xl lg:text-2xl font-bold whitespace-nowrap" style="font-family: 'Segoe UI', serif; letter-spacing: 0.5px; color: #1a1a1a;">組織図管理システム</h1>
                 </div>
+                <!-- 認証コンテナ (Phase 2) -->
+                <div id="authContainer" class="flex items-center gap-2 lg:gap-3">
+                    <!-- 認証UIはauth.jsによって動的に生成される -->
+                </div>
+
                 <div class="flex gap-2 lg:gap-3 flex-wrap justify-center">
                     <button onclick="showHistory()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
                         <i class="fas fa-history mr-1 lg:mr-2"></i><span class="hidden sm:inline">変更履歴</span><span class="sm:hidden">履歴</span>
@@ -766,6 +785,12 @@
                     </button>
                     <button onclick="showStatisticsModal()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
                         <i class="fas fa-chart-bar mr-1 lg:mr-2"></i><span class="hidden sm:inline">統計</span>
+                    </button>
+                    <button onclick="showAuditLogModal()" class="btn btn-sm bg-purple-100 hover:bg-purple-200" style="color: #6b21a8; border: 1px solid #c4b5fd;" title="監査ログ">
+                        <i class="fas fa-clipboard-list mr-1 lg:mr-2"></i><span class="hidden lg:inline">監査ログ</span>
+                    </button>
+                    <button onclick="showDashboardModal()" class="btn btn-sm bg-teal-100 hover:bg-teal-200" style="color: #0d9488; border: 1px solid #99f6e4;" title="データ品質ダッシュボード">
+                        <i class="fas fa-tachometer-alt mr-1 lg:mr-2"></i><span class="hidden lg:inline">品質</span>
                     </button>
                     <button onclick="copyViewOnlyURL()" class="btn btn-sm" style="background: #E74C3C; color: white; border: none;" title="閲覧専用URLをコピー">
                         <i class="fas fa-link mr-1 lg:mr-2"></i><span class="hidden lg:inline">閲覧URL</span>
@@ -977,12 +1002,25 @@
                     </p>
                 </div>
 
+                <!-- Google Drive 権限管理用 -->
+                <div class="form-group">
+                    <label class="flex items-center gap-2">
+                        <span>Googleアカウント</span>
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Drive権限管理</span>
+                    </label>
+                    <input type="email" id="empGoogleAccountEmail" placeholder="example@soulsyncs.google.com">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Google Driveのフォルダ共有権限を自動設定するために使用します
+                    </p>
+                </div>
+
                 <div class="form-group">
                     <label>会社メールアドレス</label>
                     <input type="email" id="empEmailCompany" placeholder="example@soulsync.co.jp">
                 </div>
                 <div class="form-group">
-                    <label>Gmailアカウント</label>
+                    <label>Gmailアカウント（個人）</label>
                     <input type="email" id="empEmailGmail" placeholder="example@gmail.com">
                 </div>
                 <div class="form-group">
@@ -1240,12 +1278,25 @@
                     </p>
                 </div>
 
+                <!-- Google Drive 権限管理用 -->
+                <div class="form-group">
+                    <label class="flex items-center gap-2">
+                        <span>Googleアカウント</span>
+                        <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Drive権限管理</span>
+                    </label>
+                    <input type="email" id="editEmpGoogleAccountEmail" placeholder="example@soulsyncs.google.com">
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Google Driveのフォルダ共有権限を自動設定するために使用します
+                    </p>
+                </div>
+
                 <div class="form-group">
                     <label>会社メールアドレス</label>
                     <input type="email" id="editEmpEmailCompany" placeholder="example@soulsync.co.jp">
                 </div>
                 <div class="form-group">
-                    <label>Gmailアカウント</label>
+                    <label>Gmailアカウント（個人）</label>
                     <input type="email" id="editEmpEmailGmail" placeholder="example@gmail.com">
                 </div>
                 <div class="form-group">
@@ -1602,7 +1653,7 @@
             <div id="confirmContent" class="mb-6">
                 <!-- 確認メッセージがここに表示されます -->
             </div>
-            <div class="flex gap-3">
+            <div id="confirmActions" class="flex gap-3">
                 <button id="confirmYes" class="btn btn-primary flex-1">
                     <i class="fas fa-check mr-2"></i>はい
                 </button>
@@ -1613,8 +1664,99 @@
         </div>
     </div>
 
+    <!-- ダッシュボードモーダル (Phase 6) -->
+    <div id="dashboardModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-tachometer-alt mr-2"></i>データ品質ダッシュボード
+                </h2>
+                <button onclick="closeModal('dashboardModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="dashboardContent">
+                <div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 監査ログモーダル (Phase 5) -->
+    <div id="auditLogModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-clipboard-list mr-2"></i>監査ログ
+                </h2>
+                <button onclick="closeModal('auditLogModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- フィルター -->
+            <div class="flex gap-4 mb-4 flex-wrap">
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">操作種別</label>
+                    <select id="auditFilterAction" class="px-3 py-2 border rounded-lg text-sm" onchange="loadAuditLogPage(0)">
+                        <option value="">すべて</option>
+                        <option value="create">作成</option>
+                        <option value="update">更新</option>
+                        <option value="delete">削除</option>
+                        <option value="rollback">ロールバック</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-600 mb-1">対象種別</label>
+                    <select id="auditFilterType" class="px-3 py-2 border rounded-lg text-sm" onchange="loadAuditLogPage(0)">
+                        <option value="">すべて</option>
+                        <option value="employee">社員</option>
+                        <option value="department">部署</option>
+                        <option value="role">役職</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ログ一覧 -->
+            <div id="auditLogContent" class="max-h-96 overflow-y-auto">
+                <div class="text-center py-8 text-gray-500">ログを読み込み中...</div>
+            </div>
+
+            <!-- ページネーション -->
+            <div id="auditLogPagination" class="mt-4"></div>
+        </div>
+    </div>
+
     <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <!-- Supabase Auth SDK (Phase 2) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Phase 7: モジュール分割 - 読み込み順序が重要 -->
+    <!-- 1. 設定ファイル（最初に読み込み） -->
+    <script src="js/config.js"></script>
+    <!-- 2. 状態管理 -->
+    <script src="js/state.js"></script>
+    <!-- 3. ユーティリティ -->
+    <script src="js/utils.js"></script>
+    <!-- 4. 認証モジュール (Phase 2) -->
+    <script src="js/auth.js"></script>
+    <!-- 5. ツリー表示強化 (Phase 3) -->
+    <script src="js/tree-enhancements.js"></script>
+    <!-- 6. ドラッグ&ドロップ強化 (Phase 4) -->
+    <script src="js/drag-drop.js"></script>
+    <!-- 7. 監査ログ (Phase 5) -->
+    <script src="js/audit.js"></script>
+    <!-- 8. ダッシュボード (Phase 6) -->
+    <script src="js/dashboard.js"></script>
+    <!-- 9. 部署エディター（インライン編集・右クリックメニュー） -->
+    <script src="js/department-editor.js"></script>
+    <!-- 10. 機能モジュール -->
+    <script src="js/features/chatwork.js"></script>
+    <script src="js/features/sync.js"></script>
+    <!-- 11. ビューモジュール (Phase 7) -->
+    <script src="js/views/card-view.js"></script>
+    <script src="js/views/tree-view.js"></script>
+    <script src="js/views/list-view.js"></script>
+    <!-- 12. メインアプリケーション（最後に読み込み） -->
     <script src="js/app.js"></script>
 </body>
 </html>

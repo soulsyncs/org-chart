@@ -1,17 +1,16 @@
-// グローバル変数
-let departments = [];
-let employees = [];
-let changeHistory = [];
-let roles = [];
-let currentViewMode = 'card'; // デフォルトはカード表示
+// ============================================
+// グローバル変数（state.jsで定義済み、後方互換性のため再宣言）
+// Phase 7: 将来的にはstate.jsの関数を使用することを推奨
+// ============================================
 
-// スキーマ拡張フラグ（chatwork_account_idカラムが存在するかどうか）
-let hasChatworkAccountIdColumn = false;
+// state.jsで初期化済みのため、ここでは再宣言しない
+// departments, employees, changeHistory, roles, currentViewMode, hasChatworkAccountIdColumn
+// これらはstate.jsからwindowオブジェクト経由でアクセス可能
 
 // スキーマチェック関数
 async function checkSchemaExtensions() {
+    // chatwork_account_id カラム確認
     try {
-        // 1件取得してカラム存在を確認
         const response = await fetch(`${SUPABASE_REST_URL}/employees?select=chatwork_account_id&limit=1`, {
             headers: {
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
@@ -19,79 +18,129 @@ async function checkSchemaExtensions() {
             }
         });
         if (response.ok) {
-            hasChatworkAccountIdColumn = true;
-            console.log('✅ chatwork_account_id column detected');
+            window.hasChatworkAccountIdColumn = true;
+            if (typeof debugLog === 'function') debugLog('✅ chatwork_account_id column detected');
         }
     } catch (e) {
-        console.log('ℹ️ chatwork_account_id column not yet added');
+        if (typeof debugLog === 'function') debugLog('ℹ️ chatwork_account_id column not yet added');
+    }
+
+    // google_account_email カラム確認（Google Drive権限管理用）
+    try {
+        const response = await fetch(`${SUPABASE_REST_URL}/employees?select=google_account_email&limit=1`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
+            }
+        });
+        if (response.ok) {
+            window.hasGoogleAccountEmailColumn = true;
+            if (typeof debugLog === 'function') debugLog('✅ google_account_email column detected');
+        }
+    } catch (e) {
+        if (typeof debugLog === 'function') debugLog('ℹ️ google_account_email column not yet added');
     }
 }
 
-// 権限管理
-let viewMode = 'edit'; // 'edit' or 'view'
-// Supabase設定
-const SUPABASE_URL = 'https://adzxpeboaoiojepcxlyc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkenhwZWJvYW9pb2plcGN4bHljIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzM4NDEsImV4cCI6MjA4MDc0OTg0MX0.j8cx0JjX0Y7npzTDF5-lyWqKEfVrfJv2148T2iK17as';
-const SUPABASE_REST_URL = `${SUPABASE_URL}/rest/v1`;
+// 権限管理（viewModeはstate.jsで定義済み）
 
+// Supabase設定はconfig.jsで定義済み（SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_REST_URL）
 
 // URLパラメータをチェック
 function checkViewMode() {
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
-    
+
+    // URLパラメータで明示的にviewモードが指定された場合のみ
     if (mode === 'view') {
-        viewMode = 'view';
-        // 閲覧専用モードのスタイルを適用
+        window.viewMode = 'view';
         document.body.classList.add('view-only-mode');
         showNotification('閲覧専用モードで表示しています', 'info');
+        applyViewModeStyles();
+        return;
     }
-    
+
+    // 認証済みの管理者/編集者は編集モードのまま
+    if (typeof hasPermission === 'function' && hasPermission('editor')) {
+        window.viewMode = 'edit';
+        // バッジ・スタイルを削除
+        const existingBadge = document.querySelector('.view-only-badge');
+        if (existingBadge) existingBadge.remove();
+        document.body.classList.remove('view-only-mode');
+        return;
+    }
+
+    // それ以外は閲覧モード
     applyViewModeStyles();
 }
-let additionalDeptCounter = 0;
 
 // 閲覧専用モードのスタイル適用
 function applyViewModeStyles() {
-    if (viewMode === 'view') {
-        // 編集ボタンを全て非表示
+    // 既存のスタイルを削除
+    const existingStyle = document.getElementById('view-only-styles');
+    if (existingStyle) existingStyle.remove();
+    document.body.classList.remove('view-only-mode');
+
+    // 閲覧専用バッジを削除
+    const existingBadge = document.querySelector('.view-only-badge');
+    if (existingBadge) existingBadge.remove();
+
+    if (window.viewMode === 'view') {
+        // bodyにクラスを追加
+        document.body.classList.add('view-only-mode');
+
+        // 編集ボタンのみ非表示にするCSS（詳細表示は許可）
         const style = document.createElement('style');
         style.id = 'view-only-styles';
         style.textContent = `
-            .view-only-mode .action-buttons button:not([onclick*="refresh"]):not([onclick*="filter"]):not([onclick*="clear"]):not([onclick*="setViewMode"]),
-            .view-only-mode button[onclick*="edit"],
-            .view-only-mode button[onclick*="delete"],
-            .view-only-mode button[onclick*="add"],
-            .view-only-mode button[onclick*="move"],
-            .view-only-mode button[onclick*="import"],
-            .view-only-mode button[onclick*="showAdd"],
-            .view-only-mode button[onclick*="showMove"],
-            .view-only-mode button[onclick*="confirm"],
-            .view-only-mode button[onclick*="editEmployee"],
-            .view-only-mode button[onclick*="confirmDelete"] {
-                display: none !important;
-            }
-            
-            .view-only-mode header {
-                background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%) !important;
-                opacity: 0.8;
+            /* ドラッグ&ドロップを無効化 */
+            .view-only-mode [draggable="true"] {
+                cursor: default;
             }
         `;
         document.head.appendChild(style);
-        
-        // ヘッダーに閲覧専用バッジを追加
+
+        // JavaScriptでボタンを直接非表示（より確実・柔軟）
+        hideEditButtons();
+
+        // ヘッダーに閲覧専用バッジを追加（ヘッダー色は変えない）
         setTimeout(() => {
             const header = document.querySelector('header h1');
             if (header && !header.querySelector('.view-only-badge')) {
                 const badge = document.createElement('span');
                 badge.className = 'view-only-badge';
-                badge.style.cssText = 'background: #ef4444; padding: 4px 12px; border-radius: 6px; font-size: 14px; margin-left: 10px;';
+                badge.style.cssText = 'background: #ef4444; color: white; padding: 4px 12px; border-radius: 6px; font-size: 14px; margin-left: 10px;';
                 badge.textContent = '閲覧専用';
                 header.appendChild(badge);
             }
         }, 100);
     }
 }
+
+// 編集ボタンを直接非表示にする（ヘッダー部分のアクションボタンのみ）
+function hideEditButtons() {
+    if (window.viewMode !== 'view') return;
+
+    // ヘッダー部分のアクションボタンのみ対象
+    const editKeywords = ['社員を追加', '部署を追加', '異動', 'ソウルくんに同期', 'インポート'];
+
+    document.querySelectorAll('header button, .action-buttons button').forEach(btn => {
+        const text = btn.textContent || '';
+        const isEditButton = editKeywords.some(keyword => text.includes(keyword));
+
+        if (isEditButton) {
+            btn.style.display = 'none';
+        }
+    });
+}
+
+// MutationObserverで動的に追加されるボタンも非表示に
+const viewModeObserver = new MutationObserver(() => {
+    if (window.viewMode === 'view') {
+        hideEditButtons();
+    }
+});
+viewModeObserver.observe(document.body, { childList: true, subtree: true });
 
 // URLコピー機能を追加
 function copyViewOnlyURL() {
@@ -132,28 +181,52 @@ async function loadData() {
         const empData = await empResponse.json();
         employees = empData || [];
 
-        // 変更履歴の読み込み
-        const historyResponse = await fetch(`${SUPABASE_REST_URL}/change_history?limit=100&order=created_at.desc`, {
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'apikey': SUPABASE_ANON_KEY,
-                'Content-Type': 'application/json'
+        // 変更履歴の読み込み（テーブルが存在しない場合はスキップ）
+        try {
+            const historyResponse = await fetch(`${SUPABASE_REST_URL}/change_history?limit=100&order=created_at.desc`, {
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                }
+            });
+            if (historyResponse.ok) {
+                const historyData = await historyResponse.json();
+                changeHistory = Array.isArray(historyData) ? historyData : [];
+            } else {
+                // テーブルが存在しない場合などはエラーを無視
+                if (typeof debugLog === 'function') debugLog('change_history table not available, skipping...');
+                changeHistory = [];
             }
-        });
-        const historyData = await historyResponse.json();
-        changeHistory = historyData || [];
+        } catch (err) {
+            if (typeof debugLog === 'function') debugLog('change_history load skipped:', err.message);
+            changeHistory = [];
+        }
 
         // 役職データの読み込み（Phase 3.5対応）
-        const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?is_active=eq.true&order=display_order`, {
-            headers: {
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'apikey': SUPABASE_ANON_KEY,
-                'Content-Type': 'application/json'
+        try {
+            const rolesResponse = await fetch(`${SUPABASE_REST_URL}/roles?is_active=eq.true&order=level.desc,display_order.asc`, {
+                headers: {
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                    'apikey': SUPABASE_ANON_KEY
+                }
+            });
+            if (rolesResponse.ok) {
+                const rolesData = await rolesResponse.json();
+                roles = Array.isArray(rolesData) ? rolesData : [];
+                if (typeof debugLog === 'function') debugLog('Loaded roles:', roles.length, 'items');
+            } else {
+                if (typeof debugLog === 'function') debugLog('roles table not available, skipping...');
+                roles = [];
             }
-        });
-        const rolesData = await rolesResponse.json();
-        roles = rolesData || [];
-        console.log('Loaded roles:', roles.length, 'items');
+        } catch (err) {
+            if (typeof debugLog === 'function') debugLog('roles load skipped:', err.message);
+            roles = [];
+        }
+
+        // window変数を更新（他モジュールからアクセス可能にする）
+        window.employees = employees;
+        window.departments = departments;
+        window.roles = roles;
 
         // UIの更新
         updateStatistics();
@@ -186,9 +259,11 @@ function renderOrganizationChart() {
     container.innerHTML = '';
 
     // 表示モードに応じてレンダリング
-    if (currentViewMode === 'card') {
+    if (window.currentViewMode === 'card') {
         // カード表示（デフォルト）
-        const topLevelDepts = departments.filter(d => !d.parent_id || d.parent_id === 'null');
+        const topLevelDepts = departments
+            .filter(d => !d.parent_id || d.parent_id === 'null')
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
         topLevelDepts.forEach(dept => {
             const deptSection = createDepartmentSectionWithOrder(dept);
             container.appendChild(deptSection);
@@ -198,306 +273,26 @@ function renderOrganizationChart() {
             initializeDragAndDrop();
             initializeDepartmentSorting();
         }, 100);
-    } else if (currentViewMode === 'tree') {
+    } else if (window.currentViewMode === 'tree') {
         renderTreeView(container);
-    } else if (currentViewMode === 'list') {
+    } else if (window.currentViewMode === 'list') {
         renderListView(container);
     }
-}
 
-// 部署内の社員を department_order でソート
-function sortEmployeesByDepartmentOrder(deptId) {
-    const deptEmps = employees.filter(e => e.department_id === deptId);
-    return deptEmps.sort((a, b) => {
-        const orderA = a.department_order || 0;
-        const orderB = b.department_order || 0;
-        return orderA - orderB;
-    });
-}
-
-// 部署内のドラッグ&ドロップを初期化（SortableJS使用）
-function initializeDepartmentSorting() {
-    const deptSections = document.querySelectorAll('.card-dept-section');
-    
-    deptSections.forEach(section => {
-        const empGrid = section.querySelector('.card-employee-grid');
-        if (!empGrid) return;
-        
-        // SortableJSの初期化
-        Sortable.create(empGrid, {
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            group: false,
-            onEnd: async (evt) => {
-                await handleEmployeeReorder(evt);
-            }
-        });
-    });
-}
-
-// 社員の順番変更を処理
-async function handleEmployeeReorder(evt) {
-    const empGrid = evt.from;
-    const deptId = empGrid.closest('.card-dept-section').id.replace('dept-', '');
-    
-    // 新しい順番を計算
-    const items = empGrid.querySelectorAll('.employee-card-mini');
-    const updatePromises = [];
-    
-    items.forEach((item, index) => {
-        const empId = item.dataset.empId;
-        const employee = employees.find(e => e.id === empId);
-        
-        if (employee && (employee.department_order || 0) !== index) {
-            const updatedEmployee = {...employee, department_order: index};
-            
-            // Supabaseに更新
-            const updatePromise = fetch(`${SUPABASE_REST_URL}/employees?id=eq.${empId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'apikey': SUPABASE_ANON_KEY
-                },
-                body: JSON.stringify(updatedEmployee)
-            }).then(response => {
-                if (!response.ok) throw new Error(`Failed to update employee ${empId}`);
-                const idx = employees.findIndex(e => e.id === empId);
-                if (idx !== -1) {
-                    employees[idx] = updatedEmployee;
-                }
-                return updatedEmployee;
-            });
-            
-            updatePromises.push(updatePromise);
-        }
-    });
-    
-    if (updatePromises.length === 0) return;
-    
-    try {
-        await Promise.all(updatePromises);
-        
-        // 変更履歴に記録
-        const dept = departments.find(d => d.id === deptId);
-        const orderMap = {};
-        items.forEach((item, index) => {
-            orderMap[item.dataset.empId] = index;
-        });
-        
-        await addChangeHistory(
-            '部署内順番変更',
-            'employee_order',
-            deptId,
-            null,
-            orderMap,
-            `${dept.name}内の社員順番を変更しました（ドラッグ&ドロップ）`
-        );
-        
-        showNotification('社員の順番を更新しました', 'success');
-    } catch (error) {
-        console.error('順番更新エラー:', error);
-        showNotification('順番の更新に失敗しました。ページを再読み込みしてください。', 'error');
-        await loadData();
+    // 部署エディターのイベントを再設定（ダブルクリック・右クリック）
+    if (typeof attachDepartmentEditorEvents === 'function') {
+        setTimeout(() => {
+            attachDepartmentEditorEvents();
+        }, 150);
     }
 }
 
-// 部署セクションの作成（カード表示用、department_order対応）
-function createDepartmentSectionWithOrder(dept) {
-    const section = document.createElement('div');
-    section.className = 'card-dept-section';
-    section.id = `dept-${dept.id}`;
-
-    // 部署の社員数を計算
-    const deptEmpCount = employees.filter(e => {
-        if (e.department_id === dept.id) return true;
-        try {
-            const depts = JSON.parse(e.departments || '[]');
-            return depts.some(d => d.department_id === dept.id);
-        } catch (err) {
-            return false;
-        }
-    }).length;
-    
-    // 部署ヘッダー
-    const header = document.createElement('div');
-    header.className = 'card-dept-header';
-    header.innerHTML = `
-        <div class="card-dept-title">
-            <h3>${dept.name}</h3>
-            <span class="card-dept-count">(${deptEmpCount}名)</span>
-        </div>
-        <div class="card-dept-buttons">
-            <button onclick="editDepartment('${dept.id}')" class="btn-icon-sm" title="編集">
-                <i class="fas fa-edit"></i>
-            </button>
-            <button onclick="confirmDeleteDepartment('${dept.id}')" class="btn-icon-sm btn-icon-danger" title="削除">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
-    `;
-    section.appendChild(header);
-
-    // この部署の社員（主所属のみ、department_order でソート）
-    const deptEmployees = employees.filter(e => e.department_id === dept.id)
-        .sort((a, b) => (a.department_order || 0) - (b.department_order || 0));
-    
-    // 社員グリッド
-    if (deptEmployees.length > 0) {
-        const empGrid = document.createElement('div');
-        empGrid.className = 'card-employee-grid';
-        empGrid.id = `employees-${dept.id}`;
-        empGrid.dataset.deptId = dept.id;
-        
-        deptEmployees.forEach(emp => {
-            const empCard = createEmployeeCard(emp, dept.id);
-            empGrid.appendChild(empCard);
-        });
-        
-        section.appendChild(empGrid);
-    }
-
-    // 子部署
-    const childDepts = departments.filter(d => d.parent_id === dept.id);
-    if (childDepts.length > 0) {
-        const childContainer = document.createElement('div');
-        childContainer.className = 'card-children-container';
-        
-        childDepts.forEach(childDept => {
-            const childSection = createDepartmentSectionWithOrder(childDept);
-            childContainer.appendChild(childSection);
-        });
-        
-        section.appendChild(childContainer);
-    }
-
-    return section;
-}
-
-// 部署セクションの作成（カード表示用）
-function createDepartmentSection(dept) {
-    const section = document.createElement('div');
-    section.className = 'card-dept-section';
-    section.id = `dept-${dept.id}`;
-
-    // 部署の社員数を計算
-    const deptEmpCount = employees.filter(e => {
-        if (e.department_id === dept.id) return true;
-        try {
-            const depts = JSON.parse(e.departments || '[]');
-            return depts.some(d => d.department_id === dept.id);
-        } catch (err) {
-            return false;
-        }
-    }).length;
-    
-    // 部署ヘッダー
-    const header = document.createElement('div');
-    header.className = 'card-dept-header';
-    header.innerHTML = `
-        <div class="card-dept-title">
-            <h3>${dept.name}</h3>
-            <span class="card-dept-count">(${deptEmpCount}名)</span>
-        </div>
-        <div class="card-dept-buttons">
-            <button onclick="editDepartment('${dept.id}')" class="btn-icon-sm" title="編集">
-                <i class="fas fa-edit"></i>
-            </button>
-            <button onclick="confirmDeleteDepartment('${dept.id}')" class="btn-icon-sm btn-icon-danger" title="削除">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
-    `;
-    section.appendChild(header);
-
-    // この部署の社員（主所属 + 兼務）
-    const deptEmployees = employees.filter(e => {
-        // 主所属がこの部署
-        if (e.department_id === dept.id) return true;
-        
-        // 兼務でこの部署に所属
-        try {
-            const depts = JSON.parse(e.departments || '[]');
-            return depts.some(d => d.department_id === dept.id);
-        } catch (err) {
-            return false;
-        }
-    });
-    
-    // 社員グリッド
-    if (deptEmployees.length > 0) {
-        const empGrid = document.createElement('div');
-        empGrid.className = 'card-employee-grid';
-        
-        deptEmployees.forEach(emp => {
-            const empCard = createEmployeeCard(emp, dept.id);
-            empGrid.appendChild(empCard);
-        });
-        
-        section.appendChild(empGrid);
-    }
-
-    // 子部署
-    const childDepts = departments.filter(d => d.parent_id === dept.id);
-    if (childDepts.length > 0) {
-        const childContainer = document.createElement('div');
-        childContainer.className = 'card-children-container';
-        
-        childDepts.forEach(childDept => {
-            const childSection = createDepartmentSection(childDept);
-            childContainer.appendChild(childSection);
-        });
-        
-        section.appendChild(childContainer);
-    }
-
-    return section;
-}
-
-// 社員カードの作成（超コンパクト版：名前＋役職のみ）
-function createEmployeeCard(emp, currentDeptId = null) {
-    const card = document.createElement('div');
-    card.className = 'employee-card-mini';
-    card.dataset.empId = emp.id;
-    
-    // 兼務先で表示されているかチェック
-    const isConcurrent = currentDeptId && emp.department_id !== currentDeptId;
-    
-    // 兼務先での役職を取得
-    let displayPosition = emp.position || '';
-    if (isConcurrent) {
-        try {
-            const depts = JSON.parse(emp.departments || '[]');
-            const concurrentDept = depts.find(d => d.department_id === currentDeptId);
-            if (concurrentDept && concurrentDept.position) {
-                displayPosition = concurrentDept.position;
-            }
-        } catch(e) {}
-    }
-    
-    // 雇用形態のマーカー色
-    const typeColor = emp.employment_type === '社員' ? '#3b82f6' : 
-                      emp.employment_type === '業務委託' ? '#f59e0b' : '#10b981';
-    
-    // 超コンパクト表示：名前と役職 + 編集・削除ボタン
-    card.innerHTML = `
-        <span class="mini-card-marker" style="background: ${typeColor}"></span>
-        <span class="mini-card-name" onclick="showEmployeeDetail('${emp.id}')">${emp.name}</span>
-        ${displayPosition ? `<span class="mini-card-pos">${displayPosition}</span>` : ''}
-        ${isConcurrent ? '<span class="mini-card-tag">兼</span>' : ''}
-        <div class="mini-card-actions">
-            <button onclick="event.stopPropagation(); editEmployee('${emp.id}')" class="mini-card-btn mini-card-btn-edit" title="編集">
-                <i class="fas fa-edit"></i>
-            </button>
-            <button onclick="event.stopPropagation(); confirmDeleteEmployee('${emp.id}')" class="mini-card-btn mini-card-btn-delete" title="削除">
-                <i class="fas fa-trash"></i>
-            </button>
-        </div>
-    `;
-    
-    return card;
-}
+// ============================================
+// ビュー関数（Phase 7: views/ モジュールに移動済み）
+// - views/card-view.js: createDepartmentSectionWithOrder, createDepartmentSection, createEmployeeCard, etc.
+// - views/tree-view.js: renderTreeView, createTreeNodeCompact, moveEmployeeToDepartment
+// - views/list-view.js: renderListView
+// ============================================
 
 // 部署セレクトボックスの更新
 function populateDepartmentSelects() {
@@ -596,7 +391,12 @@ function getRoleName(roleId) {
 // 社員追加
 async function addEmployee(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員追加')) {
+        return;
+    }
+
     // バリデーション: 必須項目チェック
     const requiredFields = [
         { id: 'empName', label: '氏名' },
@@ -708,10 +508,15 @@ async function addEmployee(event) {
     };
 
     // ソウルくん連携: chatwork_account_idカラムが存在する場合のみ追加
-    if (hasChatworkAccountIdColumn) {
+    if (window.hasChatworkAccountIdColumn) {
         employeeData.chatwork_account_id = document.getElementById('empChatworkId').value || null;
     }
-    
+
+    // Google Drive権限管理: google_account_emailカラムが存在する場合のみ追加
+    if (window.hasGoogleAccountEmailColumn) {
+        employeeData.google_account_email = document.getElementById('empGoogleAccountEmail').value || null;
+    }
+
     // 誕生日をGoogle Calendarに同期
     if (employeeData.birthday) {
         await syncBirthdayToGoogleCalendar(employeeData.name, employeeData.birthday);
@@ -752,12 +557,17 @@ async function addEmployee(event) {
                 if (response.ok) {
                     const addedEmployee = await response.json();
                     // 変更履歴を記録
-                    await addChangeHistory('社員追加', 'employee', addedEmployee[0].id, null, addedEmployee[0], 
+                    await addChangeHistory('社員追加', 'employee', addedEmployee[0].id, null, addedEmployee[0],
                         `${employeeData.name}を${dept.name}に追加しました`);
-                    
+
+                    // Phase 5: 監査ログ記録
+                    if (typeof logEmployeeAction === 'function') {
+                        await logEmployeeAction('create', addedEmployee[0], null);
+                    }
+
                     // Chatwork通知
                     notifyEmployeeAdded(addedEmployee[0]);
-                    
+
                     document.getElementById('addEmployeeForm').reset();
                     document.getElementById('avatarPreview').innerHTML = '';
                     document.getElementById('additionalDepartments').innerHTML = '';
@@ -779,7 +589,12 @@ async function addEmployee(event) {
 // 部署追加
 async function addDepartment(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('部署追加')) {
+        return;
+    }
+
     const departmentData = {
         name: document.getElementById('deptName').value,
         parent_id: document.getElementById('deptParent').value || null,
@@ -822,7 +637,12 @@ async function addDepartment(event) {
         if (response.ok) {
             const addedDepartment = await response.json();
             await addChangeHistory('部署追加', '部署', null, addedDepartment[0]);
-            
+
+            // Phase 5: 監査ログ記録
+            if (typeof logDepartmentAction === 'function') {
+                await logDepartmentAction('create', addedDepartment[0], null);
+            }
+
             closeModal('addDepartmentModal');
             document.getElementById('addDepartmentForm').reset();
             await loadData();
@@ -841,7 +661,12 @@ async function addDepartment(event) {
 // 社員異動
 async function moveEmployee(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員異動')) {
+        return;
+    }
+
     const empId = document.getElementById('moveEmpId').value;
     const newDeptId = document.getElementById('moveEmpDepartment').value;
     
@@ -895,6 +720,11 @@ async function moveEmployee(event) {
 
 // 社員削除確認
 async function confirmDeleteEmployee(empId) {
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員削除')) {
+        return;
+    }
+
     const employee = employees.find(e => e.id === empId);
     if (!employee) {
         showNotification('社員が見つかりません', 'error');
@@ -933,7 +763,12 @@ async function confirmDeleteEmployee(empId) {
 
         if (response.ok || response.status === 204) {
             await addChangeHistory('社員削除', '社員', employee, null);
-            
+
+            // Phase 5: 監査ログ記録
+            if (typeof logEmployeeAction === 'function') {
+                await logEmployeeAction('delete', employee, employee);
+            }
+
             await loadData();
             showNotification('社員を削除しました', 'success');
         } else {
@@ -947,6 +782,11 @@ async function confirmDeleteEmployee(empId) {
 
 // 部署削除確認
 async function confirmDeleteDepartment(deptId) {
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('部署削除')) {
+        return;
+    }
+
     const dept = departments.find(d => d.id === deptId);
     if (!dept) {
         showNotification('部署が見つかりません', 'error');
@@ -989,7 +829,12 @@ async function confirmDeleteDepartment(deptId) {
 
         if (response.ok || response.status === 204) {
             await addChangeHistory('部署削除', '部署', dept, null);
-            
+
+            // Phase 5: 監査ログ記録
+            if (typeof logDepartmentAction === 'function') {
+                await logDepartmentAction('delete', dept, dept);
+            }
+
             await loadData();
             showNotification('部署を削除しました', 'success');
         } else {
@@ -1003,21 +848,32 @@ async function confirmDeleteDepartment(deptId) {
 
 // 変更履歴の追加
 async function addChangeHistory(actionType, targetType, targetId, beforeData, afterData, description) {
+    // target_idがオブジェクトの場合はIDを取得
+    let resolvedTargetId = targetId;
+    if (targetId && typeof targetId === 'object') {
+        resolvedTargetId = targetId.id || null;
+    }
+
     const historyData = {
-        id: generateId('hist'),
-        action_type: actionType,
+        // id は自動生成（uuid）
+        operation: actionType,  // テーブルのカラム名に合わせる
         target_type: targetType,
-        target_id: targetId,
-        before_data: beforeData ? JSON.stringify(beforeData) : '',
-        after_data: afterData ? JSON.stringify(afterData) : '',
-        description: description,
+        target_id: resolvedTargetId,
+        before_data: beforeData ? JSON.stringify(beforeData) : null,
+        after_data: afterData ? JSON.stringify(afterData) : null,
+        description: description || null,
         timestamp: new Date().toISOString()
     };
 
     try {
         await fetch(`${SUPABASE_REST_URL}/change_history`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
             body: JSON.stringify(historyData)
         });
     } catch (error) {
@@ -1028,9 +884,14 @@ async function addChangeHistory(actionType, targetType, targetId, beforeData, af
 // 変更履歴の表示
 async function showHistory() {
     try {
-        const response = await fetch(`${SUPABASE_REST_URL}/change_history?limit=50&order=created_at.desc`);
+        const response = await fetch(`${SUPABASE_REST_URL}/change_history?limit=50&order=created_at.desc`, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            }
+        });
         const data = await response.json();
-        changeHistory = data.data || [];
+        changeHistory = Array.isArray(data) ? data : (data.data || []);
 
         const content = document.getElementById('historyContent');
         content.innerHTML = '';
@@ -1297,10 +1158,8 @@ function showNotification(message, type = 'info', duration = 3000) {
     }, duration);
 }
 
-// ユーティリティ関数
-function generateId(prefix) {
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-}
+// ユーティリティ関数はutils.jsで定義済み
+// generateId() はutils.jsからwindow経由でアクセス可能
 
 // ============================================
 // 新機能: 社員編集
@@ -1354,7 +1213,13 @@ function editEmployee(empId) {
     if (editChatworkIdInput) {
         editChatworkIdInput.value = employee.chatwork_account_id || '';
     }
-    
+
+    // Googleアカウント（Drive権限管理）
+    const editGoogleAccountEmailInput = document.getElementById('editEmpGoogleAccountEmail');
+    if (editGoogleAccountEmailInput) {
+        editGoogleAccountEmailInput.value = employee.google_account_email || '';
+    }
+
     // スキル・資格の表示
     try {
         const skills = JSON.parse(employee.skills || '[]');
@@ -1396,7 +1261,12 @@ function editEmployee(empId) {
 
 async function updateEmployee(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員編集')) {
+        return;
+    }
+
     const empId = document.getElementById('editEmpId').value;
     const employee = employees.find(e => e.id === empId);
     const beforeData = {...employee};
@@ -1470,10 +1340,15 @@ async function updateEmployee(event) {
     };
 
     // ソウルくん連携: chatwork_account_idカラムが存在する場合のみ追加
-    if (hasChatworkAccountIdColumn) {
+    if (window.hasChatworkAccountIdColumn) {
         updatedEmployee.chatwork_account_id = document.getElementById('editEmpChatworkId').value || null;
     }
-    
+
+    // Google Drive権限管理: google_account_emailカラムが存在する場合のみ追加
+    if (window.hasGoogleAccountEmailColumn) {
+        updatedEmployee.google_account_email = document.getElementById('editEmpGoogleAccountEmail').value || null;
+    }
+
     // 誕生日をGoogle Calendarに同期
     if (updatedEmployee.birthday && updatedEmployee.birthday !== beforeData.birthday) {
         await syncBirthdayToGoogleCalendar(updatedEmployee.name, updatedEmployee.birthday);
@@ -1537,7 +1412,12 @@ async function updateEmployee(event) {
 
                 if (response.ok) {
                     await addChangeHistory('社員編集', '社員', beforeData, updatedEmployee);
-                    
+
+                    // Phase 5: 監査ログ記録
+                    if (typeof logEmployeeAction === 'function') {
+                        await logEmployeeAction('update', updatedEmployee, beforeData);
+                    }
+
                     document.getElementById('editEmployeeForm').reset();
                     document.getElementById('editAvatarPreview').innerHTML = '';
                     document.getElementById('editAdditionalDepartments').innerHTML = '';
@@ -1583,7 +1463,12 @@ function editDepartment(deptId) {
 
 async function updateDepartment(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('部署編集')) {
+        return;
+    }
+
     const deptId = document.getElementById('editDeptId').value;
     const dept = departments.find(d => d.id === deptId);
     const beforeData = {...dept};
@@ -1630,7 +1515,12 @@ async function updateDepartment(event) {
 
             if (response.ok) {
                 await addChangeHistory('部署編集', '部署', beforeData, updatedDept);
-                
+
+                // Phase 5: 監査ログ記録
+                if (typeof logDepartmentAction === 'function') {
+                    await logDepartmentAction('update', updatedDept, beforeData);
+                }
+
                 closeModal('editDepartmentModal');
                 document.getElementById('editDepartmentForm').reset();
                 await loadData();
@@ -1751,8 +1641,10 @@ function generatePDFContent() {
     `;
     
     // 部署ごとに社員リストを生成
-    const topLevelDepts = departments.filter(d => !d.parent_id);
-    
+    const topLevelDepts = departments
+        .filter(d => !d.parent_id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
     topLevelDepts.forEach((dept, deptIndex) => {
         html += generateDepartmentPDF(dept, deptIndex > 0);
     });
@@ -2113,11 +2005,11 @@ async function restoreFromHistory(historyId) {
 // 新機能: 複数部署管理
 // ============================================
 function addDepartmentField() {
-    additionalDeptCounter++;
+    window.additionalDeptCounter++;
     const container = document.getElementById('additionalDepartments');
     const fieldGroup = document.createElement('div');
     fieldGroup.className = 'flex gap-2 mb-2';
-    fieldGroup.id = `addDept-${additionalDeptCounter}`;
+    fieldGroup.id = `addDept-${window.additionalDeptCounter}`;
     
     fieldGroup.innerHTML = `
         <select class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-add-dept-select>
@@ -2125,7 +2017,7 @@ function addDepartmentField() {
             ${departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
         </select>
         <input type="text" placeholder="役職" class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-add-dept-position>
-        <button type="button" onclick="removeDepartmentField('addDept-${additionalDeptCounter}')" 
+        <button type="button" onclick="removeDepartmentField('addDept-${window.additionalDeptCounter}')" 
                 class="btn bg-red-500 text-white px-3">
             <i class="fas fa-times"></i>
         </button>
@@ -2135,11 +2027,11 @@ function addDepartmentField() {
 }
 
 function addEditDepartmentField() {
-    additionalDeptCounter++;
+    window.additionalDeptCounter++;
     const container = document.getElementById('editAdditionalDepartments');
     const fieldGroup = document.createElement('div');
     fieldGroup.className = 'flex gap-2 mb-2';
-    fieldGroup.id = `editDept-${additionalDeptCounter}`;
+    fieldGroup.id = `editDept-${window.additionalDeptCounter}`;
     
     fieldGroup.innerHTML = `
         <select class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-select>
@@ -2147,7 +2039,7 @@ function addEditDepartmentField() {
             ${departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('')}
         </select>
         <input type="text" placeholder="役職" class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-position>
-        <button type="button" onclick="removeDepartmentField('editDept-${additionalDeptCounter}')" 
+        <button type="button" onclick="removeDepartmentField('editDept-${window.additionalDeptCounter}')" 
                 class="btn bg-red-500 text-white px-3">
             <i class="fas fa-times"></i>
         </button>
@@ -2188,10 +2080,10 @@ function renderAdditionalDepartments(container, additionalDepts) {
     if (!additionalDepts || additionalDepts.length === 0) return;
     
     additionalDepts.forEach(dept => {
-        additionalDeptCounter++;
+        window.additionalDeptCounter++;
         const fieldGroup = document.createElement('div');
         fieldGroup.className = 'flex gap-2 mb-2';
-        fieldGroup.id = `editDept-${additionalDeptCounter}`;
+        fieldGroup.id = `editDept-${window.additionalDeptCounter}`;
         
         fieldGroup.innerHTML = `
             <select class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-select>
@@ -2200,7 +2092,7 @@ function renderAdditionalDepartments(container, additionalDepts) {
             </select>
             <input type="text" placeholder="役職" value="${dept.position || ''}" 
                    class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg" data-edit-dept-position>
-            <button type="button" onclick="removeDepartmentField('editDept-${additionalDeptCounter}')" 
+            <button type="button" onclick="removeDepartmentField('editDept-${window.additionalDeptCounter}')" 
                     class="btn bg-red-500 text-white px-3">
                 <i class="fas fa-times"></i>
             </button>
@@ -2219,7 +2111,7 @@ async function syncBirthdayToGoogleCalendar(name, birthday) {
     // 1. Google Calendarに直接追加するリンクを生成
     // 2. iCalendarファイル(.ics)をダウンロード可能にする
     
-    console.log(`誕生日登録: ${name} - ${birthday}`);
+    if (typeof debugLog === 'function') debugLog(`誕生日登録: ${name} - ${birthday}`);
     
     // 通知で、ユーザーに選択肢を提示
     const year = new Date(birthday).getFullYear();
@@ -2309,10 +2201,9 @@ function downloadICS(name, birthday) {
 // ============================================
 // 社員詳細表示
 // ============================================
-let currentDetailEmployeeId = null;
 
 function showEmployeeDetail(empId) {
-    currentDetailEmployeeId = empId;
+    window.currentDetailEmployeeId = empId;
     const employee = employees.find(e => e.id === empId);
     if (!employee) return;
     
@@ -2483,12 +2374,14 @@ function showEmployeeDetail(empId) {
         <div class="border-t border-gray-200 my-4"></div>
         
         <div class="flex gap-3 justify-center">
-            <button onclick="editEmployeeFromDetail()" class="btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition">
-                <i class="fas fa-edit mr-2"></i>編集
-            </button>
-            <button onclick="confirmDeleteEmployeeFromDetail()" class="btn bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition">
-                <i class="fas fa-trash mr-2"></i>削除
-            </button>
+            ${(typeof hasPermission === 'function' && hasPermission('editor')) ? `
+                <button onclick="editEmployeeFromDetail()" class="btn bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    <i class="fas fa-edit mr-2"></i>編集
+                </button>
+                <button onclick="confirmDeleteEmployeeFromDetail()" class="btn bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    <i class="fas fa-trash mr-2"></i>削除
+                </button>
+            ` : ''}
             <button onclick="closeModal('employeeDetailModal')" class="btn bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold transition">
                 閉じる
             </button>
@@ -2502,14 +2395,14 @@ function showEmployeeDetail(empId) {
 function editEmployeeFromDetail() {
     closeModal('employeeDetailModal');
     setTimeout(() => {
-        editEmployee(currentDetailEmployeeId);
+        editEmployee(window.currentDetailEmployeeId);
     }, 100);
 }
 
 function confirmDeleteEmployeeFromDetail() {
     closeModal('employeeDetailModal');
     setTimeout(() => {
-        confirmDeleteEmployee(currentDetailEmployeeId);
+        confirmDeleteEmployee(window.currentDetailEmployeeId);
     }, 100);
 }
 
@@ -3065,7 +2958,7 @@ function downloadTemplate() {
 // ============================================
 
 function setViewMode(mode) {
-    currentViewMode = mode;
+    window.currentViewMode = mode;
     
     // ボタンのスタイル更新
     document.querySelectorAll('[id^="viewMode"]').forEach(btn => {
@@ -3086,695 +2979,98 @@ function setViewMode(mode) {
 function renderOrganizationByMode() {
     const orgChartDiv = document.getElementById('orgChart');
     orgChartDiv.innerHTML = '';
-    
-    if (currentViewMode === 'card') {
+
+    if (window.currentViewMode === 'card') {
         renderCardView(orgChartDiv);
-    } else if (currentViewMode === 'tree') {
+    } else if (window.currentViewMode === 'tree') {
         renderTreeView(orgChartDiv);
-    } else if (currentViewMode === 'list') {
+    } else if (window.currentViewMode === 'list') {
         renderListView(orgChartDiv);
     }
-}
 
-function renderCardView(container) {
-    // 既存のカード表示（現在の実装）
-    const topLevelDepts = departments.filter(d => !d.parent_id);
-    topLevelDepts.forEach(dept => {
-        const section = createDepartmentSection(dept);
-        container.appendChild(section);
-    });
-}
-
-function renderTreeView(container) {
-    container.className = 'tree-view-container';
-    
-    const tree = document.createElement('div');
-    tree.className = 'tree-compact';
-    
-    const topLevelDepts = departments.filter(d => !d.parent_id || d.parent_id === 'null');
-    topLevelDepts.forEach(dept => {
-        const treeNode = createTreeNodeCompact(dept);
-        tree.appendChild(treeNode);
-    });
-    
-    container.appendChild(tree);
-}
-
-// コンパクトなツリーノード作成
-function createTreeNodeCompact(dept) {
-    const node = document.createElement('div');
-    node.className = 'tree-node-compact';
-    
-    // 部署ボックス（コンパクト）
-    const deptBox = document.createElement('div');
-    deptBox.className = 'tree-dept-box-compact';
-    deptBox.dataset.deptId = dept.id; // 部署IDを保存
-    deptBox.innerHTML = `<span class="tree-dept-name-compact">${dept.name}</span>`;
-    deptBox.onclick = () => showDepartmentDetail(dept.id);
-    
-    // ドロップゾーンとして設定
-    deptBox.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        deptBox.classList.add('drag-over');
-    });
-    
-    deptBox.addEventListener('dragleave', (e) => {
-        deptBox.classList.remove('drag-over');
-    });
-    
-    deptBox.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        deptBox.classList.remove('drag-over');
-        
-        const employeeId = e.dataTransfer.getData('text/plain');
-        const targetDeptId = dept.id;
-        
-        // 部署移動を実行
-        await moveEmployeeToDepartment(employeeId, targetDeptId);
-    });
-    
-    node.appendChild(deptBox);
-    
-    // 社員リスト（名前のみ）
-    const deptEmployees = employees.filter(e => {
-        if (e.department_id === dept.id) return true;
-        try {
-            const depts = JSON.parse(e.departments || '[]');
-            return depts.some(d => d.department_id === dept.id);
-        } catch(err) {
-            return false;
-        }
-    });
-    
-    if (deptEmployees.length > 0) {
-        const empList = document.createElement('div');
-        empList.className = 'tree-emp-list-compact';
-        
-        deptEmployees.forEach(emp => {
-            const empItem = document.createElement('div');
-            empItem.className = 'tree-emp-item-compact';
-            empItem.draggable = true; // ドラッグ可能にする
-            empItem.dataset.empId = emp.id; // 社員IDを保存
-            empItem.innerHTML = `<span class="tree-emp-name">${emp.name}</span>`;
-            empItem.onclick = (e) => {
-                // ドラッグ中はクリックイベントを無効化
-                if (!empItem.classList.contains('dragging')) {
-                    showEmployeeDetail(emp.id);
-                }
-            };
-            
-            // ドラッグ開始
-            empItem.addEventListener('dragstart', (e) => {
-                empItem.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', emp.id);
-            });
-            
-            // ドラッグ終了
-            empItem.addEventListener('dragend', (e) => {
-                empItem.classList.remove('dragging');
-            });
-            
-            empList.appendChild(empItem);
-        });
-        
-        node.appendChild(empList);
-    }
-    
-    // 子部署
-    const childDepts = departments.filter(d => d.parent_id === dept.id);
-    if (childDepts.length > 0) {
-        const children = document.createElement('div');
-        children.className = 'tree-children-compact';
-        
-        childDepts.forEach(child => {
-            const childNode = createTreeNodeCompact(child);
-            children.appendChild(childNode);
-        });
-        
-        node.appendChild(children);
-    }
-    
-    return node;
-}
-
-// 部署詳細表示
-function showDepartmentDetail(deptId) {
-    const dept = departments.find(d => d.id === deptId);
-    if (!dept) return;
-    
-    const empCount = employees.filter(e => e.department_id === deptId).length;
-    
-    alert(`部署名: ${dept.name}\n社員数: ${empCount}名\n\n編集・削除はカード表示から行えます`);
-}
-
-// 社員の部署移動処理（ドラッグ&ドロップ用）
-async function moveEmployeeToDepartment(employeeId, targetDeptId) {
-    const employee = employees.find(e => e.id === employeeId);
-    const targetDept = departments.find(d => d.id === targetDeptId);
-    
-    if (!employee || !targetDept) {
-        showNotification('社員または部署が見つかりません', 'error');
-        return;
-    }
-    
-    // 同じ部署への移動はスキップ
-    if (employee.department_id === targetDeptId) {
-        showNotification('既に同じ部署に所属しています', 'info');
-        return;
-    }
-    
-    const currentDept = departments.find(d => d.id === employee.department_id);
-    
-    // 確認モーダル
-    const confirmMsg = `
-        <div class="bg-blue-50 p-4 rounded-lg">
-            <h3 class="font-bold text-lg mb-3">社員を移動しますか？</h3>
-            <dl class="space-y-2">
-                <div class="flex"><dt class="font-semibold w-32">氏名:</dt><dd>${employee.name}</dd></div>
-                <div class="flex"><dt class="font-semibold w-32">移動元:</dt><dd>${currentDept ? currentDept.name : '不明'}</dd></div>
-                <div class="flex"><dt class="font-semibold w-32">移動先:</dt><dd class="text-blue-600 font-bold">${targetDept.name}</dd></div>
-            </dl>
-            <p class="mt-3 text-sm text-gray-600">※主所属部署が変更されます</p>
-        </div>
-    `;
-    
-    const result = await showConfirmModal(confirmMsg);
-    if (!result) return;
-    
-    try {
-        // 移動前のデータを保存
-        const beforeData = { ...employee };
-        
-        // departmentsフィールド（JSON）を更新
-        let updatedDepartments = [];
-        try {
-            // 既存のdepartmentsを解析
-            const existingDepts = JSON.parse(employee.departments || '[]');
-            
-            // 元の主所属を削除し、新しい主所属を追加
-            updatedDepartments = existingDepts.filter(d => d.department_id !== employee.department_id);
-            
-            // 新しい主所属を先頭に追加
-            updatedDepartments.unshift({
-                department_id: targetDeptId,
-                position: employee.position || '',
-                is_main: true
-            });
-            
-            // 兼務の is_main を false に設定
-            updatedDepartments = updatedDepartments.map((d, index) => ({
-                ...d,
-                is_main: index === 0
-            }));
-        } catch (err) {
-            // departmentsがない場合は新規作成
-            updatedDepartments = [{
-                department_id: targetDeptId,
-                position: employee.position || '',
-                is_main: true
-            }];
-        }
-        
-        // 部署移動を実行（department_id と departments の両方を更新）
-        const response = await fetch(`${SUPABASE_REST_URL}/employees?id=eq.${employeeId}`, {
-            method: 'PATCH',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=representation'
-            },
-            body: JSON.stringify({
-                department_id: targetDeptId,
-                departments: JSON.stringify(updatedDepartments)
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('部署移動に失敗しました');
-        }
-        
-        // 変更履歴に記録
-        await addChangeHistory('社員部署移動', '社員', beforeData, {
-            ...beforeData,
-            department_id: targetDeptId
-        });
-        
-        showNotification(`${employee.name}さんを${targetDept.name}に移動しました`, 'success');
-        
-        // データ再読み込み
-        await loadData();
-        
-    } catch (error) {
-        console.error('部署移動エラー:', error);
-        showNotification('部署移動に失敗しました', 'error');
+    // 部署エディターのイベントを再設定（ダブルクリック・右クリック）
+    if (typeof attachDepartmentEditorEvents === 'function') {
+        // 少し遅延させてDOMが完全に構築されるのを待つ
+        setTimeout(() => {
+            attachDepartmentEditorEvents();
+        }, 50);
     }
 }
 
-function createCompactEmployeeCard(emp, deptId) {
-    const isMainDept = emp.department_id === deptId;
-    const position = isMainDept ? emp.position : getConcurrentPosition(emp, deptId);
-    
-    const card = document.createElement('div');
-    card.className = 'bg-white p-3 rounded-lg shadow-sm border-l-4 border-purple-500 hover:shadow-md transition cursor-pointer';
-    card.onclick = () => showEmployeeDetail(emp.id);
-    
-    const avatar = emp.avatar ? 
-        `<img src="${emp.avatar}" class="w-10 h-10 rounded-full object-cover">` :
-        `<div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold">${emp.name.charAt(0)}</div>`;
-    
-    card.innerHTML = `
-        <div class="flex items-center gap-3">
-            ${avatar}
-            <div class="flex-1 min-w-0">
-                <p class="font-semibold text-gray-800 truncate">${emp.name}</p>
-                <p class="text-xs text-gray-600">${position}</p>
-                ${!isMainDept ? '<span class="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded mt-1">兼務</span>' : ''}
-            </div>
-        </div>
-    `;
-    
-    return card;
-}
-
-function renderListView(container) {
-    container.className = 'list-view';
-    
-    const table = document.createElement('div');
-    table.className = 'bg-white rounded-lg shadow-md overflow-hidden';
-    
-    let html = `
-        <table class="w-full">
-            <thead class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
-                <tr>
-                    <th class="px-4 py-3 text-left">氏名</th>
-                    <th class="px-4 py-3 text-left">部署</th>
-                    <th class="px-4 py-3 text-left">役職</th>
-                    <th class="px-4 py-3 text-left">雇用形態</th>
-                    <th class="px-4 py-3 text-left">連絡先</th>
-                    <th class="px-4 py-3 text-left">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-    
-    employees.forEach((emp, index) => {
-        const dept = departments.find(d => d.id === emp.department_id);
-        const deptName = dept ? dept.name : '未所属';
-        const bgClass = index % 2 === 0 ? 'bg-gray-50' : 'bg-white';
-        
-        html += `
-            <tr class="${bgClass} hover:bg-purple-50 transition cursor-pointer" onclick="showEmployeeDetail('${emp.id}')">
-                <td class="px-4 py-3">
-                    <div class="flex items-center gap-3">
-                        ${emp.avatar ? 
-                            `<img src="${emp.avatar}" class="w-8 h-8 rounded-full object-cover">` :
-                            `<div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-sm">${emp.name.charAt(0)}</div>`
-                        }
-                        <span class="font-semibold">${emp.name}</span>
-                    </div>
-                </td>
-                <td class="px-4 py-3">${deptName}</td>
-                <td class="px-4 py-3">${emp.position || '-'}</td>
-                <td class="px-4 py-3">
-                    <span class="inline-block px-2 py-1 rounded text-xs ${
-                        emp.employment_type === '社員' ? 'bg-blue-100 text-blue-800' :
-                        emp.employment_type === '業務委託' ? 'bg-green-100 text-green-800' :
-                        'bg-yellow-100 text-yellow-800'
-                    }">${emp.employment_type}</span>
-                </td>
-                <td class="px-4 py-3 text-sm">
-                    ${emp.email_company ? `<div>${emp.email_company}</div>` : ''}
-                    ${emp.phone ? `<div>${emp.phone}</div>` : ''}
-                </td>
-                <td class="px-4 py-3">
-                    <div class="flex gap-2">
-                        <button onclick="event.stopPropagation(); editEmployee('${emp.id}')" class="text-blue-600 hover:text-blue-800">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); confirmDeleteEmployee('${emp.id}')" class="text-red-600 hover:text-red-800">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-    
-    html += `
-            </tbody>
-        </table>
-    `;
-    
-    table.innerHTML = html;
-    container.appendChild(table);
-}
-
-function getEmployeeCountInDepartment(deptId) {
-    return employees.filter(e => {
-        if (e.department_id === deptId) return true;
-        try {
-            const depts = JSON.parse(e.departments || '[]');
-            return depts.some(d => d.department_id === deptId);
-        } catch(err) {
-            return false;
-        }
-    }).length;
-}
-
-function getConcurrentPosition(emp, deptId) {
-    try {
-        const depts = JSON.parse(emp.departments || '[]');
-        const dept = depts.find(d => d.department_id === deptId);
-        return dept ? dept.position : emp.position;
-    } catch(err) {
-        return emp.position;
-    }
-}
+// ============================================
+// レンダリング関数（Phase 7: views/ モジュールに移動済み）
+// renderCardView, renderTreeView, renderListView,
+// createTreeNodeCompact, createCompactEmployeeCard,
+// showDepartmentDetail, moveEmployeeToDepartment,
+// getEmployeeCountInDepartment, getConcurrentPosition
+// は views/card-view.js, views/tree-view.js, views/list-view.js で定義
+// ============================================
 
 // ============================================
 // Chatwork通知連携
+// Phase 7: features/chatwork.js に移動済み
 // ============================================
-function toggleChatworkSettings() {
-    const enabled = document.getElementById('chatworkEnabled').checked;
-    const fields = document.getElementById('chatworkSettingsFields');
-    fields.style.display = enabled ? 'block' : 'none';
-}
 
-function saveChatworkSettings() {
-    const enabled = document.getElementById('chatworkEnabled').checked;
-    const apiToken = document.getElementById('chatworkApiToken').value;
-    const roomId = document.getElementById('chatworkRoomId').value;
-    
-    if (enabled && (!apiToken || !roomId)) {
-        showNotification('APIトークンとルームIDを入力してください', 'error');
-        return;
-    }
-    
-    // ローカルストレージに保存
-    localStorage.setItem('chatworkEnabled', enabled);
-    if (enabled) {
-        localStorage.setItem('chatworkApiToken', apiToken);
-        localStorage.setItem('chatworkRoomId', roomId);
-    }
-    
-    closeModal('chatworkSettingsModal');
-    showNotification('Chatwork設定を保存しました', 'success');
-}
+// ============================================
+// ソウルくん同期機能
+// Phase 7: features/sync.js に移動済み
+// ============================================
 
-function loadChatworkSettings() {
-    const enabled = localStorage.getItem('chatworkEnabled') === 'true';
-    const apiToken = localStorage.getItem('chatworkApiToken') || '';
-    const roomId = localStorage.getItem('chatworkRoomId') || '';
-    
-    document.getElementById('chatworkEnabled').checked = enabled;
-    document.getElementById('chatworkApiToken').value = apiToken;
-    document.getElementById('chatworkRoomId').value = roomId;
-    
-    if (enabled) {
-        document.getElementById('chatworkSettingsFields').style.display = 'block';
-    }
-}
-
-async function sendChatworkNotification(message) {
-    const enabled = localStorage.getItem('chatworkEnabled') === 'true';
-    if (!enabled) return;
-    
-    const apiToken = localStorage.getItem('chatworkApiToken');
-    const roomId = localStorage.getItem('chatworkRoomId');
-    
-    if (!apiToken || !roomId) return;
-    
-    try {
-        // 注意：CORSの問題により、直接ブラウザから呼び出すことはできません
-        // 実際の運用では、バックエンドサーバーを経由する必要があります
-        const response = await fetch(`https://api.chatwork.com/v2/rooms/${roomId}/messages`, {
-            method: 'POST',
-            headers: {
-                'X-ChatWorkToken': apiToken,
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `body=${encodeURIComponent(message)}`
-        });
-        
-        if (response.ok) {
-            console.log('Chatwork通知送信成功');
-        }
-    } catch (error) {
-        console.error('Chatwork通知エラー:', error);
-        // エラーが発生してもメイン機能には影響を与えない
-    }
-}
-
-// 社員追加時にChatwork通知
-function notifyEmployeeAdded(employee) {
-    const dept = departments.find(d => d.id === employee.department_id);
-    const deptName = dept ? dept.name : '未所属';
-    const message = `[info][title]新しい社員が追加されました[/title]
-氏名: ${employee.name}
-部署: ${deptName}
-役職: ${employee.position || '未設定'}
-雇用形態: ${employee.employment_type}
-登録日時: ${new Date().toLocaleString('ja-JP')}[/info]`;
-    
-    sendChatworkNotification(message);
-}
-
-// 社員異動時にChatwork通知
-function notifyEmployeeTransferred(employee, fromDept, toDept) {
-    const message = `[info][title]社員の異動がありました[/title]
-氏名: ${employee.name}
-異動元: ${fromDept}
-異動先: ${toDept}
-異動日時: ${new Date().toLocaleString('ja-JP')}[/info]`;
-    
-    sendChatworkNotification(message);
-}
-
-// モーダルを開く時にChatwork設定を読み込む
-const originalOpenModal = openModal;
-window.openModal = function(modalId) {
-    if (modalId === 'chatworkSettingsModal') {
-        loadChatworkSettings();
-    }
-    originalOpenModal(modalId);
-};
-
-// モーダル外クリックで閉じる
+// モーダル外クリックで閉じる（残存：モーダル共通処理）
 window.onclick = function(event) {
     if (event.target.classList.contains('modal')) {
         event.target.style.display = 'none';
     }
-}
-// ========================================
-// ソウルくん同期機能
-// ========================================
+};
 
-// 本番用（2026-01-25修正: 正しいCloud Run URLに更新）
-const SOULKUN_API_BASE = 'https://soulkun-api-tzu7ftekzq-an.a.run.app';
-
-async function syncToSoulKun() {
-    try {
-        showSyncLoading('同期中...');
-
-        // 部署の階層レベルを計算する関数
-        function calculateDeptLevel(deptId, deptMap, cache = {}) {
-            if (cache[deptId] !== undefined) return cache[deptId];
-            const dept = deptMap[deptId];
-            if (!dept || !dept.parent_id) {
-                cache[deptId] = 1;
-                return 1;
-            }
-            cache[deptId] = calculateDeptLevel(dept.parent_id, deptMap, cache) + 1;
-            return cache[deptId];
+// Chatwork設定モーダルオープン時の処理
+const _originalOpenModal = typeof openModal === 'function' ? openModal : null;
+if (_originalOpenModal) {
+    window.openModal = function(modalId) {
+        if (modalId === 'chatworkSettingsModal' && typeof loadChatworkSettings === 'function') {
+            loadChatworkSettings();
         }
-
-        // 部署マップを作成
-        const deptMap = {};
-        departments.forEach(d => { deptMap[d.id] = d; });
-
-        // 部署データをAPI形式にマッピング
-        const mappedDepartments = departments.map(d => ({
-            id: String(d.id),
-            name: d.name,
-            code: d.code || String(d.id),
-            parentId: d.parent_id ? String(d.parent_id) : null,
-            level: calculateDeptLevel(d.id, deptMap),
-            displayOrder: d.display_order || 1,
-            isActive: d.is_active !== false
-        }));
-
-        // 役職データを生成（Phase 3.5対応）
-        // rolesテーブルから読み込んだデータを使用（ハードコードを廃止）
-        let mappedRoles;
-        if (roles && roles.length > 0) {
-            // rolesテーブルがある場合（推奨）
-            mappedRoles = roles
-                .filter(r => r.is_active !== false)
-                .map(r => ({
-                    id: r.id,  // Supabase側のrole_id（例: role_ceo）
-                    name: r.name,
-                    level: r.level,
-                    description: r.description || null
-                }));
-            console.log('Using roles from Supabase table:', mappedRoles.length, 'roles');
-        } else {
-            // フォールバック: 従来のposition抽出方式（後方互換性）
-            console.warn('roles table not available, falling back to position extraction');
-            const positionSet = new Set();
-            employees.forEach(e => {
-                if (e.position) positionSet.add(e.position);
-            });
-            const positions = Array.from(positionSet);
-
-            // フォールバック用のデフォルトレベルマッピング
-            const defaultLevels = {
-                '代表取締役': 6, 'CEO': 6, 'CFO': 6, 'COO': 6,
-                '管理部マネージャー': 5, '管理部スタッフ': 5,
-                '取締役': 4, '部長': 4,
-                '課長': 3, 'リーダー': 3,
-                '社員': 2, 'メンバー': 2,
-                '業務委託': 1
-            };
-
-            mappedRoles = positions.map((pos, idx) => ({
-                id: `role_${pos.replace(/\s+/g, '_').toLowerCase()}`,
-                name: pos,
-                level: defaultLevels[pos] || 2,  // デフォルトは社員レベル
-                description: null
-            }));
-        }
-
-        // 役職が空の場合はデフォルト役職を追加
-        if (mappedRoles.length === 0) {
-            mappedRoles.push({
-                id: 'role_employee',
-                name: '社員',
-                level: 2,
-                description: 'デフォルト役職'
-            });
-        }
-
-        // 役職名からroleIdを取得するマップ（フォールバック用）
-        const roleIdMap = {};
-        mappedRoles.forEach(r => {
-            roleIdMap[r.name] = r.id;
-        });
-
-        // 社員データをAPI形式にマッピング（Phase 3.5対応）
-        const mappedEmployees = employees.map(e => {
-            // role_idを優先使用、なければpositionから検索、最後にデフォルト
-            let roleId = e.role_id;
-            if (!roleId && e.position) {
-                roleId = roleIdMap[e.position];
-            }
-            if (!roleId) {
-                roleId = 'role_employee';  // デフォルト: 社員
-            }
-
-            return {
-                id: String(e.id),
-                name: e.name,
-                email: e.email_company || e.email_gmail || `${String(e.id).replace(/-/g, '')}@example.com`,
-                departmentId: String(e.department_id),
-                roleId: roleId,
-                isPrimary: true,
-                startDate: e.hire_date || null,
-                endDate: e.resignation_date || null
-            };
-        });
-
-        // ソウルシンクスの組織ID
-        const orgId = 'org_soulsyncs';
-        const response = await fetch(`${SOULKUN_API_BASE}/api/v1/organizations/${orgId}/sync-org-chart`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                organization_id: orgId,
-                source: 'org_chart_system',
-                sync_type: 'full',
-                departments: mappedDepartments,
-                roles: mappedRoles,
-                employees: mappedEmployees,
-                options: {
-                    include_inactive_users: false,
-                    include_archived_departments: false,
-                    dry_run: false
-                }
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.status === 'success') {
-            const summary = result.summary || {};
-            showNotification(
-                `同期完了！ 部署: ${summary.departments?.added || 0}追加/${summary.departments?.updated || 0}更新, ` +
-                `役職: ${summary.roles?.added || 0}追加/${summary.roles?.updated || 0}更新, ` +
-                `社員: ${summary.users?.added || 0}追加/${summary.users?.updated || 0}更新`,
-                'success'
-            );
-
-            localStorage.setItem('soulsyncs_last_sync', new Date().toISOString());
-            updateLastSyncedText();
-        } else {
-            showNotification(`同期失敗: ${result.error?.message || result.detail || '不明なエラー'}`, 'error');
-            console.error('Sync failed:', result);
-        }
-
-    } catch (error) {
-        showNotification(`通信エラー: ${error.message}`, 'error');
-        console.error('Sync error:', error);
-    } finally {
-        hideSyncLoading();
-    }
+        _originalOpenModal(modalId);
+    };
 }
 
-function showSyncLoading(message) {
-    const overlay = document.getElementById('loadingOverlay');
-    const msgElement = document.getElementById('loadingMessage');
-    if (overlay) overlay.style.display = 'flex';
-    if (msgElement) msgElement.textContent = message;
-}
+// グローバルエクスポート（他モジュールから呼び出し可能にする）
+window.showConfirmModal = showConfirmModal;
+window.showConfirmModalCallback = showConfirmModalCallback;
+window.loadData = loadData;
+window.addChangeHistory = addChangeHistory;
+window.employees = employees;
+window.departments = departments;
 
-function hideSyncLoading() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.style.display = 'none';
-}
-
-function updateLastSyncedText() {
-    const lastSync = localStorage.getItem('soulsyncs_last_sync');
-    const textElement = document.getElementById('lastSyncedText');
-    if (textElement) {
-        if (lastSync) {
-            const date = new Date(lastSync);
-            textElement.textContent = `最終同期: ${date.toLocaleString('ja-JP')}`;
-        } else {
-            textElement.textContent = '未同期';
-        }
-    }
-}
-
-function saveApiToken() {
-    const tokenInput = document.getElementById('apiToken');
-    if (!tokenInput) return;
-    
-    const token = tokenInput.value.trim();
-    if (!token) {
-        showNotification('APIトークンを入力してください', 'error');
-        return;
-    }
-    
-    localStorage.setItem('soulsyncs_api_token', token);
-    showNotification('APIトークンを保存しました', 'success');
-}
 // ページ読み込み完了時の初期化（ファイル末尾に配置）
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('DOMContentLoaded: JavaScript is fully loaded');
+    if (typeof debugLog === 'function') debugLog('DOMContentLoaded: JavaScript is fully loaded');
+
+    // Phase 2: 認証初期化（URLパラメータより先に実行）
+    if (typeof initializeAuth === 'function') {
+        await initializeAuth();
+    }
+
+    // Phase 3: ツリー表示強化初期化
+    if (typeof initializePhase3 === 'function') {
+        initializePhase3();
+    }
+
+    // Phase 4: ドラッグ&ドロップ強化初期化
+    if (typeof initializePhase4 === 'function') {
+        initializePhase4();
+    }
+
+    // Phase 6: ダッシュボード初期化
+    if (typeof initializePhase6 === 'function') {
+        initializePhase6();
+    }
+
+    // 部署エディター初期化（インライン編集・右クリックメニュー）
+    if (typeof initializeDepartmentEditor === 'function') {
+        initializeDepartmentEditor();
+    }
+
     checkViewMode();
     await checkSchemaExtensions();  // スキーマ拡張チェック（ソウルくん連携）
     loadData();
