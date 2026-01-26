@@ -500,6 +500,48 @@ async function getAuthToken() {
 }
 
 // ============================================
+// 保護されたAPI呼び出し
+// ============================================
+
+/**
+ * 権限チェック付きのfetch
+ * POST/PATCH/DELETE操作は権限がないとブロック
+ * @param {string} url - API URL
+ * @param {Object} options - fetch options
+ * @returns {Promise<Response>}
+ */
+async function protectedFetch(url, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+
+    // 読み取り操作は許可
+    if (method === 'GET') {
+        return fetch(url, options);
+    }
+
+    // 書き込み操作は権限チェック
+    if (!hasPermission('editor')) {
+        console.warn('権限がないためAPI呼び出しをブロックしました:', method, url);
+        showNotification('この操作には編集権限が必要です', 'error');
+        throw new Error('Permission denied: editor role required');
+    }
+
+    return fetch(url, options);
+}
+
+/**
+ * 編集操作を実行前にチェック
+ * @param {string} operationName - 操作名（ログ用）
+ * @returns {boolean} - 実行可能ならtrue
+ */
+function canEdit(operationName = '編集') {
+    if (!hasPermission('editor')) {
+        showNotification(`${operationName}には編集権限が必要です`, 'error');
+        return false;
+    }
+    return true;
+}
+
+// ============================================
 // グローバルエクスポート
 // ============================================
 
@@ -516,3 +558,5 @@ window.getUserRole = getUserRole;
 window.isAuthInitialized = isAuthInitialized;
 window.getAuthToken = getAuthToken;
 window.AUTH_FEATURE_FLAGS = AUTH_FEATURE_FLAGS;
+window.protectedFetch = protectedFetch;
+window.canEdit = canEdit;

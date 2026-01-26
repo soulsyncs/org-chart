@@ -47,45 +47,127 @@ function checkViewMode() {
 
 // 閲覧専用モードのスタイル適用
 function applyViewModeStyles() {
+    // 既存のスタイルを削除
+    const existingStyle = document.getElementById('view-only-styles');
+    if (existingStyle) existingStyle.remove();
+    document.body.classList.remove('view-only-mode');
+
     if (window.viewMode === 'view') {
-        // 編集ボタンを全て非表示
+        // bodyにクラスを追加
+        document.body.classList.add('view-only-mode');
+
+        // 編集ボタンを全て非表示にするCSS
         const style = document.createElement('style');
         style.id = 'view-only-styles';
         style.textContent = `
-            .view-only-mode .action-buttons button:not([onclick*="refresh"]):not([onclick*="filter"]):not([onclick*="clear"]):not([onclick*="setViewMode"]),
-            .view-only-mode button[onclick*="edit"],
-            .view-only-mode button[onclick*="delete"],
-            .view-only-mode button[onclick*="add"],
-            .view-only-mode button[onclick*="move"],
-            .view-only-mode button[onclick*="import"],
-            .view-only-mode button[onclick*="showAdd"],
-            .view-only-mode button[onclick*="showMove"],
-            .view-only-mode button[onclick*="confirm"],
-            .view-only-mode button[onclick*="editEmployee"],
-            .view-only-mode button[onclick*="confirmDelete"] {
+            /* 編集系ボタンを全て非表示 */
+            .view-only-mode button[class*="bg-red"],
+            .view-only-mode button[class*="bg-blue"],
+            .view-only-mode button[class*="bg-green"],
+            .view-only-mode button[class*="bg-yellow"],
+            .view-only-mode button[class*="bg-orange"],
+            .view-only-mode button[class*="bg-teal"],
+            .view-only-mode [onclick*="Add"],
+            .view-only-mode [onclick*="add"],
+            .view-only-mode [onclick*="Edit"],
+            .view-only-mode [onclick*="edit"],
+            .view-only-mode [onclick*="Delete"],
+            .view-only-mode [onclick*="delete"],
+            .view-only-mode [onclick*="Move"],
+            .view-only-mode [onclick*="move"],
+            .view-only-mode [onclick*="Import"],
+            .view-only-mode [onclick*="import"],
+            .view-only-mode [onclick*="sync"],
+            .view-only-mode [onclick*="Sync"] {
                 display: none !important;
             }
-            
+
+            /* 許可するボタン（閲覧系）を再表示 */
+            .view-only-mode button[onclick*="refresh"],
+            .view-only-mode button[onclick*="Refresh"],
+            .view-only-mode button[onclick*="export"],
+            .view-only-mode button[onclick*="Export"],
+            .view-only-mode button[onclick*="pdf"],
+            .view-only-mode button[onclick*="PDF"],
+            .view-only-mode button[onclick*="filter"],
+            .view-only-mode button[onclick*="Filter"],
+            .view-only-mode button[onclick*="search"],
+            .view-only-mode button[onclick*="Search"],
+            .view-only-mode button[onclick*="view"],
+            .view-only-mode button[onclick*="View"],
+            .view-only-mode button[onclick*="close"],
+            .view-only-mode button[onclick*="Close"],
+            .view-only-mode button[onclick*="setViewMode"],
+            .view-only-mode button[class*="bg-gray"] {
+                display: inline-flex !important;
+            }
+
+            /* モーダル内の編集・削除ボタンを非表示 */
+            .view-only-mode .modal button:not([onclick*="close"]):not([onclick*="Close"]) {
+                display: none !important;
+            }
+            .view-only-mode .modal button[onclick*="close"],
+            .view-only-mode .modal button[onclick*="Close"],
+            .view-only-mode .modal button:contains("閉じる") {
+                display: inline-flex !important;
+            }
+
+            /* ヘッダーをグレーに */
             .view-only-mode header {
-                background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%) !important;
-                opacity: 0.8;
+                background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%) !important;
+            }
+
+            /* ドラッグ&ドロップを無効化 */
+            .view-only-mode [draggable="true"] {
+                pointer-events: none;
+                cursor: default;
             }
         `;
         document.head.appendChild(style);
-        
+
+        // JavaScriptでボタンを直接非表示（より確実）
+        hideEditButtons();
+
         // ヘッダーに閲覧専用バッジを追加
         setTimeout(() => {
             const header = document.querySelector('header h1');
             if (header && !header.querySelector('.view-only-badge')) {
                 const badge = document.createElement('span');
                 badge.className = 'view-only-badge';
-                badge.style.cssText = 'background: #ef4444; padding: 4px 12px; border-radius: 6px; font-size: 14px; margin-left: 10px;';
+                badge.style.cssText = 'background: #ef4444; color: white; padding: 4px 12px; border-radius: 6px; font-size: 14px; margin-left: 10px;';
                 badge.textContent = '閲覧専用';
                 header.appendChild(badge);
             }
         }, 100);
     }
 }
+
+// 編集ボタンを直接非表示にする
+function hideEditButtons() {
+    if (window.viewMode !== 'view') return;
+
+    // テキストで編集系ボタンを検索して非表示
+    const editKeywords = ['追加', '編集', '削除', '異動', '同期', 'インポート'];
+    const allowKeywords = ['閉じる', 'エクスポート', 'PDF', '統計', '監査', '品質', '変更履歴', 'Chatwork', '閲覧'];
+
+    document.querySelectorAll('button').forEach(btn => {
+        const text = btn.textContent || '';
+        const isEditButton = editKeywords.some(keyword => text.includes(keyword));
+        const isAllowedButton = allowKeywords.some(keyword => text.includes(keyword));
+
+        if (isEditButton && !isAllowedButton) {
+            btn.style.display = 'none';
+        }
+    });
+}
+
+// MutationObserverで動的に追加されるボタンも非表示に
+const viewModeObserver = new MutationObserver(() => {
+    if (window.viewMode === 'view') {
+        hideEditButtons();
+    }
+});
+viewModeObserver.observe(document.body, { childList: true, subtree: true });
 
 // URLコピー機能を追加
 function copyViewOnlyURL() {
@@ -336,7 +418,12 @@ function getRoleName(roleId) {
 // 社員追加
 async function addEmployee(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員追加')) {
+        return;
+    }
+
     // バリデーション: 必須項目チェック
     const requiredFields = [
         { id: 'empName', label: '氏名' },
@@ -524,7 +611,12 @@ async function addEmployee(event) {
 // 部署追加
 async function addDepartment(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('部署追加')) {
+        return;
+    }
+
     const departmentData = {
         name: document.getElementById('deptName').value,
         parent_id: document.getElementById('deptParent').value || null,
@@ -591,7 +683,12 @@ async function addDepartment(event) {
 // 社員異動
 async function moveEmployee(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員異動')) {
+        return;
+    }
+
     const empId = document.getElementById('moveEmpId').value;
     const newDeptId = document.getElementById('moveEmpDepartment').value;
     
@@ -645,6 +742,11 @@ async function moveEmployee(event) {
 
 // 社員削除確認
 async function confirmDeleteEmployee(empId) {
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員削除')) {
+        return;
+    }
+
     const employee = employees.find(e => e.id === empId);
     if (!employee) {
         showNotification('社員が見つかりません', 'error');
@@ -702,6 +804,11 @@ async function confirmDeleteEmployee(empId) {
 
 // 部署削除確認
 async function confirmDeleteDepartment(deptId) {
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('部署削除')) {
+        return;
+    }
+
     const dept = departments.find(d => d.id === deptId);
     if (!dept) {
         showNotification('部署が見つかりません', 'error');
@@ -1170,7 +1277,12 @@ function editEmployee(empId) {
 
 async function updateEmployee(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('社員編集')) {
+        return;
+    }
+
     const empId = document.getElementById('editEmpId').value;
     const employee = employees.find(e => e.id === empId);
     const beforeData = {...employee};
@@ -1362,7 +1474,12 @@ function editDepartment(deptId) {
 
 async function updateDepartment(event) {
     event.preventDefault();
-    
+
+    // 権限チェック
+    if (typeof canEdit === 'function' && !canEdit('部署編集')) {
+        return;
+    }
+
     const deptId = document.getElementById('editDeptId').value;
     const dept = departments.find(d => d.id === deptId);
     const beforeData = {...dept};
