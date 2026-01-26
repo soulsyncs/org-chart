@@ -19,7 +19,7 @@ let roles = [];
 
 // UI状態
 let currentViewMode = 'card'; // 'card', 'tree', 'list'
-let viewMode = 'edit'; // 'edit' or 'view'
+let viewMode = 'view'; // 'edit' or 'view' - デフォルトは閲覧モード（セキュリティ対策）
 
 // スキーマ拡張フラグ
 let hasChatworkAccountIdColumn = false;

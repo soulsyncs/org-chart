@@ -65,8 +65,21 @@ async function initializeAuth() {
             currentUser = session.user;
             userRole = await checkEditPermission(currentUser.email);
             debugLog('User session found:', currentUser.email, 'role:', userRole);
+
+            // 権限に基づいてviewModeを設定
+            if (userRole === 'admin' || userRole === 'editor') {
+                viewMode = 'edit';
+            } else {
+                viewMode = 'view';
+            }
+            applyViewModeStyles();
         } else {
             debugLog('No active session');
+            // 未ログイン時は閲覧モード（ALLOW_ANONYMOUS_EDITがfalseの場合）
+            if (!AUTH_FEATURE_FLAGS.ALLOW_ANONYMOUS_EDIT) {
+                viewMode = 'view';
+                applyViewModeStyles();
+            }
         }
 
         // 認証状態変更リスナー
