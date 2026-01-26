@@ -25,7 +25,7 @@ const AUTH_FEATURE_FLAGS = {
     ENABLE_AUTH: true,           // 認証機能を有効化
     ENABLE_RLS: true,            // RLSを有効化
     ALLOW_ANONYMOUS_VIEW: true,  // 未ログインでも閲覧可能
-    ALLOW_ANONYMOUS_EDIT: true,  // 未ログインでも編集可能（開発・社内用）
+    ALLOW_ANONYMOUS_EDIT: false,  // 本番環境: 編集には認証必須
     DEBUG_MODE: false            // デバッグログ出力
 };
 
