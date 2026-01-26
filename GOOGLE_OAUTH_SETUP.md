@@ -12,7 +12,7 @@
 | OAuth同意画面 | 外部（**本番環境** ✅） |
 | アプリ名 | 組織図管理システム |
 | クライアントID | 898513057014-kmpk084u8rfqsmgo6iarcrdhsm8ti9rq.apps.googleusercontent.com |
-| JavaScript生成元 | http://localhost:8080, https://soulsyncs.jp |
+| JavaScript生成元 | http://localhost:8080, https://org-chart.soulsyncs.jp |
 | リダイレクトURI | https://adzxpeboaoiojepcxlyc.supabase.co/auth/v1/callback |
 
 ### Supabase (adzxpeboaoiojepcxlyc)
@@ -21,7 +21,7 @@
 |------|-----|
 | external_google_enabled | true |
 | site_url | http://localhost:8080 |
-| uri_allow_list | http://localhost:8080, https://soulsyncs.jp, https://www.soulsyncs.jp |
+| uri_allow_list | http://localhost:8080, https://org-chart.soulsyncs.jp, https://www.soulsyncs.jp |
 
 ### テストユーザー
 - info@soulsyncs.jp
@@ -43,10 +43,10 @@ https://console.cloud.google.com/apis/credentials/consent?project=soulkun-produc
 |------|-----|
 | アプリ名 | 組織図管理システム |
 | ユーザーサポートメール | info@soulsyncs.jp |
-| アプリのホームページ | https://soulsyncs.jp |
-| アプリのプライバシーポリシーリンク | https://soulsyncs.jp/privacy.html |
-| アプリの利用規約リンク | https://soulsyncs.jp/terms.html |
-| 承認済みドメイン | soulsyncs.jp |
+| アプリのホームページ | https://org-chart.soulsyncs.jp |
+| アプリのプライバシーポリシーリンク | https://org-chart.soulsyncs.jp/privacy.html |
+| アプリの利用規約リンク | https://org-chart.soulsyncs.jp/terms.html |
+| 承認済みドメイン | org-chart.soulsyncs.jp |
 | デベロッパーの連絡先メールアドレス | info@soulsyncs.jp |
 
 3. 「保存して次へ」をクリック
@@ -76,7 +76,7 @@ https://console.cloud.google.com/apis/credentials/consent?project=soulkun-produc
 ## 動作確認
 
 - [x] ローカル開発環境 (http://localhost:8080)
-- [x] 本番環境 (https://soulsyncs.jp) ✅ 本番化完了 (2026-01-26)
+- [x] 本番環境 (https://org-chart.soulsyncs.jp) ✅ 本番化完了 (2026-01-26)
 
 ## トラブルシューティング
 
