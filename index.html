@@ -1009,99 +1009,115 @@
     <!-- 社員追加モーダル -->
     <div id="addEmployeeModal" class="modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">社員を追加</h2>
-                <button onclick="closeModal('addEmployeeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-user-plus mr-2 text-sm" style="color: var(--soul-red);"></i>社員を追加</h2>
+                <button onclick="closeModal('addEmployeeModal')" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form id="addEmployeeForm" onsubmit="addEmployee(event)">
-                <div class="form-group">
-                    <label>氏名 *</label>
-                    <input type="text" id="empName" required>
-                </div>
-                <div class="form-group">
-                    <label>主所属部署 *</label>
-                    <select id="empDepartment" required></select>
-                </div>
-                <div class="form-group">
-                    <label>主役職</label>
-                    <select id="empRoleId">
-                        <option value="">役職を選択...</option>
-                    </select>
-                    <!-- 後方互換性: 非表示のposition入力（将来削除予定） -->
-                    <input type="hidden" id="empPosition">
-                </div>
-
-                <!-- 兼務部署 -->
-                <div class="form-group">
-                    <label>兼務部署</label>
-                    <div id="additionalDepartments"></div>
-                    <button type="button" onclick="addDepartmentField()" class="btn bg-blue-500 text-white mt-2">
-                        <i class="fas fa-plus mr-2"></i>部署を追加
-                    </button>
-                </div>
-                
-                <!-- ソウルくん連携（重要） -->
-                <div class="form-group">
-                    <label class="flex items-center gap-2">
-                        <span>ChatWork ID</span>
-                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
-                    </label>
-                    <input type="text" id="empChatworkId" placeholder="1234567" pattern="[0-9]*">
-                    <p class="text-xs text-gray-500 mt-1">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
-                    </p>
+                <!-- セクション: 基本情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-user mr-1"></i>基本情報</p>
+                    <div class="form-group">
+                        <label>氏名 *</label>
+                        <input type="text" id="empName" required>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>主所属部署 *</label>
+                            <select id="empDepartment" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>主役職</label>
+                            <select id="empRoleId">
+                                <option value="">役職を選択...</option>
+                            </select>
+                            <input type="hidden" id="empPosition">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>兼務部署</label>
+                        <div id="additionalDepartments"></div>
+                        <button type="button" onclick="addDepartmentField()" class="btn bg-blue-500 text-white mt-2 text-sm">
+                            <i class="fas fa-plus mr-1"></i>部署を追加
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>雇用形態 *</label>
+                        <select id="empType" required>
+                            <option value="社員">社員</option>
+                            <option value="業務委託">業務委託</option>
+                            <option value="パート">パート</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>会社メールアドレス</label>
-                    <input type="email" id="empEmailCompany" placeholder="example@soulsync.co.jp">
-                </div>
-                <div class="form-group">
-                    <label>Gmailアカウント</label>
-                    <input type="email" id="empEmailGmail" placeholder="example@gmail.com">
-                </div>
-                <div class="form-group">
-                    <label>共有先メールアドレス</label>
-                    <input type="email" id="empEmailShared" placeholder="shared@example.com">
-                </div>
-                <div class="form-group">
-                    <label>電話番号</label>
-                    <input type="tel" id="empPhone">
-                </div>
-                <div class="form-group">
-                    <label>誕生日</label>
-                    <input type="date" id="empBirthday">
-                </div>
-                <div class="form-group">
-                    <label>プロフィールページURL（Canva等）</label>
-                    <input type="url" id="empProfileUrl" placeholder="https://...">
+                <!-- セクション: 連絡先 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-address-book mr-1"></i>連絡先</p>
+                    <div class="form-group">
+                        <label class="flex items-center gap-2">
+                            <span>ChatWork ID</span>
+                            <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
+                        </label>
+                        <input type="text" id="empChatworkId" placeholder="1234567" pattern="[0-9]*">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>会社メール</label>
+                            <input type="email" id="empEmailCompany" placeholder="example@soulsync.co.jp">
+                        </div>
+                        <div class="form-group">
+                            <label>Gmail</label>
+                            <input type="email" id="empEmailGmail" placeholder="example@gmail.com">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>共有先メール</label>
+                            <input type="email" id="empEmailShared" placeholder="shared@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>電話番号</label>
+                            <input type="tel" id="empPhone">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>プロフィールURL（Canva等）</label>
+                        <input type="url" id="empProfileUrl" placeholder="https://...">
+                    </div>
                 </div>
 
-                <!-- 雇用情報 -->
-                <div class="form-group">
-                    <label>雇用形態 *</label>
-                    <select id="empType" required>
-                        <option value="社員">社員</option>
-                        <option value="業務委託">業務委託</option>
-                        <option value="パート">パート</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>入社日</label>
-                    <input type="date" id="empHireDate">
-                </div>
-                <div class="form-group">
-                    <label>退社日</label>
-                    <input type="date" id="empResignationDate">
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="empIsActive" checked class="mr-2">
-                        在籍中
-                    </label>
+                <!-- セクション: 在籍情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-calendar-alt mr-1"></i>在籍情報</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>誕生日</label>
+                            <input type="date" id="empBirthday">
+                        </div>
+                        <div class="form-group">
+                            <label>入社日</label>
+                            <input type="date" id="empHireDate">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>退社日</label>
+                            <input type="date" id="empResignationDate">
+                        </div>
+                        <div class="form-group flex items-end pb-1">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="empIsActive" checked class="mr-2">
+                                在籍中
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- スキル・資格 -->
@@ -1271,99 +1287,116 @@
     <!-- 社員編集モーダル -->
     <div id="editEmployeeModal" class="modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">社員情報を編集</h2>
-                <button onclick="closeModal('editEmployeeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-user-edit mr-2 text-sm" style="color: var(--soul-red);"></i>社員情報を編集</h2>
+                <button onclick="closeModal('editEmployeeModal')" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form id="editEmployeeForm" onsubmit="updateEmployee(event)">
                 <input type="hidden" id="editEmpId">
-                <div class="form-group">
-                    <label>氏名 *</label>
-                    <input type="text" id="editEmpName" required>
-                </div>
-                <div class="form-group">
-                    <label>主所属部署 *</label>
-                    <select id="editEmpDepartment" required></select>
-                </div>
-                <div class="form-group">
-                    <label>主役職</label>
-                    <select id="editEmpRoleId">
-                        <option value="">役職を選択...</option>
-                    </select>
-                    <!-- 後方互換性: 非表示のposition入力（将来削除予定） -->
-                    <input type="hidden" id="editEmpPosition">
-                </div>
-
-                <!-- 兼務部署 -->
-                <div class="form-group">
-                    <label>兼務部署</label>
-                    <div id="editAdditionalDepartments"></div>
-                    <button type="button" onclick="addEditDepartmentField()" class="btn bg-blue-500 text-white mt-2">
-                        <i class="fas fa-plus mr-2"></i>部署を追加
-                    </button>
-                </div>
-                
-                <!-- ソウルくん連携（重要） -->
-                <div class="form-group">
-                    <label class="flex items-center gap-2">
-                        <span>ChatWork ID</span>
-                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
-                    </label>
-                    <input type="text" id="editEmpChatworkId" placeholder="1234567" pattern="[0-9]*">
-                    <p class="text-xs text-gray-500 mt-1">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
-                    </p>
+                <!-- セクション: 基本情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-user mr-1"></i>基本情報</p>
+                    <div class="form-group">
+                        <label>氏名 *</label>
+                        <input type="text" id="editEmpName" required>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>主所属部署 *</label>
+                            <select id="editEmpDepartment" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>主役職</label>
+                            <select id="editEmpRoleId">
+                                <option value="">役職を選択...</option>
+                            </select>
+                            <input type="hidden" id="editEmpPosition">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>兼務部署</label>
+                        <div id="editAdditionalDepartments"></div>
+                        <button type="button" onclick="addEditDepartmentField()" class="btn bg-blue-500 text-white mt-2 text-sm">
+                            <i class="fas fa-plus mr-1"></i>部署を追加
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>雇用形態 *</label>
+                        <select id="editEmpType" required>
+                            <option value="社員">社員</option>
+                            <option value="業務委託">業務委託</option>
+                            <option value="パート">パート</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>会社メールアドレス</label>
-                    <input type="email" id="editEmpEmailCompany" placeholder="example@soulsync.co.jp">
+                <!-- セクション: 連絡先 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-address-book mr-1"></i>連絡先</p>
+                    <div class="form-group">
+                        <label class="flex items-center gap-2">
+                            <span>ChatWork ID</span>
+                            <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
+                        </label>
+                        <input type="text" id="editEmpChatworkId" placeholder="1234567" pattern="[0-9]*">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>会社メール</label>
+                            <input type="email" id="editEmpEmailCompany" placeholder="example@soulsync.co.jp">
+                        </div>
+                        <div class="form-group">
+                            <label>Gmail</label>
+                            <input type="email" id="editEmpEmailGmail" placeholder="example@gmail.com">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>共有先メール</label>
+                            <input type="email" id="editEmpEmailShared" placeholder="shared@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>電話番号</label>
+                            <input type="tel" id="editEmpPhone">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>プロフィールURL（Canva等）</label>
+                        <input type="url" id="editEmpProfileUrl" placeholder="https://...">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Gmailアカウント</label>
-                    <input type="email" id="editEmpEmailGmail" placeholder="example@gmail.com">
-                </div>
-                <div class="form-group">
-                    <label>共有先メールアドレス</label>
-                    <input type="email" id="editEmpEmailShared" placeholder="shared@example.com">
-                </div>
-                <div class="form-group">
-                    <label>電話番号</label>
-                    <input type="tel" id="editEmpPhone">
-                </div>
-                <div class="form-group">
-                    <label>誕生日</label>
-                    <input type="date" id="editEmpBirthday">
-                </div>
-                <div class="form-group">
-                    <label>プロフィールページURL（Canva等）</label>
-                    <input type="url" id="editEmpProfileUrl" placeholder="https://...">
-                </div>
-                <!-- 雇用情報 -->
-                <div class="form-group">
-                    <label>雇用形態 *</label>
-                    <select id="editEmpType" required>
-                        <option value="社員">社員</option>
-                        <option value="業務委託">業務委託</option>
-                        <option value="パート">パート</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>入社日</label>
-                    <input type="date" id="editEmpHireDate">
-                </div>
-                <div class="form-group">
-                    <label>退社日</label>
-                    <input type="date" id="editEmpResignationDate">
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="editEmpIsActive" class="mr-2">
-                        在籍中
-                    </label>
+
+                <!-- セクション: 在籍情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-calendar-alt mr-1"></i>在籍情報</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>誕生日</label>
+                            <input type="date" id="editEmpBirthday">
+                        </div>
+                        <div class="form-group">
+                            <label>入社日</label>
+                            <input type="date" id="editEmpHireDate">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>退社日</label>
+                            <input type="date" id="editEmpResignationDate">
+                        </div>
+                        <div class="form-group flex items-end pb-1">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="editEmpIsActive" class="mr-2">
+                                在籍中
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- スキル・資格 -->
