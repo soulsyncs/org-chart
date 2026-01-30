@@ -15,12 +15,20 @@
             --soul-dark-gray: #2c3e50;
             --soul-light-gray: #ecf0f1;
             --soul-white: #ffffff;
+            /* デザイントークン */
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
         }
-        
+
         body {
             font-family: 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
-            background: #f9fafb;
+            background: #f4f6f9;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
         
         .org-chart {
@@ -40,48 +48,63 @@
         }
         
         /* ================================ */
-        /* カード表示用スタイル（超コンパクト版） */
+        /* カード表示用スタイル（改善版） */
         /* ================================ */
         .card-dept-section {
             margin: 0.5rem 0;
-            padding: 0.5rem;
+            padding: 0.625rem;
             background: white;
-            border-radius: 6px;
+            border-radius: 10px;
             border: 1px solid #e5e7eb;
+            transition: box-shadow 0.2s ease;
         }
-        
+
+        .card-dept-section:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
         .card-dept-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.25rem 0.5rem;
-            margin-bottom: 0.375rem;
+            padding: 0.375rem 0.625rem;
+            margin-bottom: 0.5rem;
             border-left: 3px solid var(--soul-red);
-            background: #f9fafb;
+            background: linear-gradient(135deg, #fef2f2 0%, #f9fafb 100%);
             border-radius: 4px;
         }
-        
+
         .card-dept-title {
             display: flex;
             align-items: center;
-            gap: 0.375rem;
+            gap: 0.5rem;
         }
-        
+
         .card-dept-title h3 {
             font-size: 0.875rem;
-            font-weight: 600;
+            font-weight: 700;
             color: #1a1a1a;
             margin: 0;
         }
-        
+
         .card-dept-count {
-            font-size: 0.75rem;
+            font-size: 0.6875rem;
             color: #6b7280;
+            background: white;
+            padding: 0.0625rem 0.375rem;
+            border-radius: 999px;
+            border: 1px solid #e5e7eb;
         }
-        
+
         .card-dept-buttons {
             display: flex;
             gap: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        .card-dept-header:hover .card-dept-buttons {
+            opacity: 1;
         }
         
         .btn-icon-sm {
@@ -112,25 +135,29 @@
         }
         
         .card-children-container {
-            margin-left: 0.75rem;
-            margin-top: 0.75rem;
-            padding-left: 0.75rem;
-            border-left: 2px solid #e5e7eb;
+            margin-left: 0.875rem;
+            margin-top: 0.625rem;
+            padding-left: 0.875rem;
+            border-left: 2px solid #fecaca;
         }
-        
+
         @media (max-width: 640px) {
             .card-dept-section {
-                margin: 0.75rem 0;
+                margin: 0.375rem 0;
                 padding: 0.5rem;
             }
-            
+
+            .card-dept-buttons {
+                opacity: 1;
+            }
+
             .card-employee-grid {
                 gap: 0.25rem;
             }
-            
+
             .card-children-container {
-                margin-left: 0.375rem;
-                padding-left: 0.375rem;
+                margin-left: 0.5rem;
+                padding-left: 0.5rem;
             }
         }
         
@@ -159,109 +186,119 @@
         .tree-dept-box-compact {
             background: white;
             border: 2px solid var(--soul-red);
-            border-radius: 15px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 600;
+            border-radius: 20px;
+            padding: 0.375rem 1rem;
+            font-size: 0.8125rem;
+            font-weight: 700;
             color: #1a1a1a;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
             white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
-        
+
         .tree-dept-box-compact:hover {
             background: var(--soul-red);
             color: white;
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.25);
+            transform: translateY(-1px);
         }
-        
+
         .tree-emp-list-compact {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.25rem;
+            gap: 0.3125rem;
             justify-content: center;
-            margin: 0.25rem 0;
-            padding: 0.25rem 0;
+            margin: 0.375rem 0;
+            padding: 0.375rem 0;
             position: relative;
-            max-width: 200px;
+            max-width: 220px;
         }
-        
+
         .tree-emp-list-compact::before {
             content: '';
             position: absolute;
             top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 1px;
-            height: 0.25rem;
-            background: #d1d5db;
+            width: 2px;
+            height: 0.375rem;
+            background: #e5e7eb;
         }
-        
+
         .tree-emp-item-compact {
-            background: #f9fafb;
+            background: white;
             border: 1px solid #e5e7eb;
-            border-radius: 3px;
-            padding: 0.125rem 0.375rem;
-            font-size: 0.6875rem;
+            border-radius: 4px;
+            padding: 0.1875rem 0.5rem;
+            font-size: 0.75rem;
             color: #374151;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
         }
-        
+
         .tree-emp-item-compact:hover {
             background: #fef2f2;
             border-color: var(--soul-red);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(231, 76, 60, 0.12);
         }
-        
+
         .tree-children-compact {
             display: flex;
             flex-direction: row;
-            gap: 1rem;
-            margin-top: 0.5rem;
-            padding-top: 0.5rem;
+            gap: 1.25rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
             position: relative;
             justify-content: center;
         }
-        
+
         .tree-children-compact::before {
             content: '';
             position: absolute;
             top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 1px;
-            height: 0.5rem;
-            background: #d1d5db;
+            width: 2px;
+            height: 0.75rem;
+            background: #e5e7eb;
         }
-        
+
         .tree-children-compact::after {
             content: '';
             position: absolute;
             top: 0;
-            left: 15%;
-            right: 15%;
-            height: 1px;
-            background: #d1d5db;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #e5e7eb;
         }
-        
+
         @media (max-width: 768px) {
             .tree-children-compact {
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 0.625rem;
                 align-items: center;
             }
-            
+
+            .tree-children-compact::after {
+                display: none;
+            }
+
             .tree-dept-box-compact {
-                font-size: 0.6875rem;
-                padding: 0.1875rem 0.5rem;
+                font-size: 0.75rem;
+                padding: 0.3125rem 0.75rem;
             }
-            
+
             .tree-emp-item-compact {
-                font-size: 0.625rem;
-                padding: 0.125rem 0.25rem;
+                font-size: 0.6875rem;
+                padding: 0.1875rem 0.375rem;
             }
-            
+
             .tree-emp-list-compact {
-                max-width: 150px;
+                max-width: 180px;
             }
         }
         
@@ -314,39 +351,41 @@
 
         
         /* ================================ */
-        /* 超コンパクト社員ミニカード */
+        /* 社員ミニカード（改善版） */
         /* ================================ */
         .employee-card-mini {
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.3125rem;
             background: white;
             border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
+            border-radius: 6px;
+            padding: 0.3125rem 0.5rem;
+            font-size: 0.8125rem;
             transition: all 0.15s ease;
             white-space: nowrap;
             position: relative;
+            cursor: pointer;
         }
-        
+
         .employee-card-mini:hover {
             background: #fef2f2;
             border-color: var(--soul-red);
             transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(231, 76, 60, 0.1);
         }
-        
+
         .mini-card-marker {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             flex-shrink: 0;
         }
-        
+
         .mini-card-name {
             font-weight: 600;
             color: #1a1a1a;
-            max-width: 80px;
+            max-width: 100px;
             overflow: hidden;
             text-overflow: ellipsis;
             cursor: pointer;
@@ -451,20 +490,37 @@
         
         .modal-content {
             background-color: white;
-            margin: 5% auto;
-            padding: 2rem;
+            margin: 3% auto;
+            padding: 1.75rem;
             border-radius: 16px;
             width: 90%;
             max-width: 600px;
-            max-height: 85vh;
+            max-height: 88vh;
             overflow-y: auto;
-            box-shadow: 0 24px 48px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+            animation: modalSlideIn 0.25s ease;
         }
-        
+
+        .modal-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
         @keyframes modalSlideIn {
             from {
-                transform: translateY(-50px);
+                transform: translateY(-30px);
                 opacity: 0;
             }
             to {
@@ -524,33 +580,36 @@
         }
         
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
-        
+
         .form-group label {
             display: block;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.375rem;
             color: #334155;
+            font-size: 0.875rem;
         }
-        
+
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e2e8f0;
+            padding: 0.5625rem 0.75rem;
+            border: 1.5px solid #e2e8f0;
             border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            background: #fafbfc;
         }
-        
+
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: var(--soul-red);
-            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.08);
+            background: white;
         }
         
         .history-item {
@@ -625,23 +684,23 @@
         @media (max-width: 768px) {
             .modal-content {
                 width: 95%;
-                margin: 5% auto;
-                padding: 1.5rem;
-                max-height: 90vh;
+                margin: 2% auto;
+                padding: 1.25rem;
+                max-height: 92vh;
             }
-            
+
             h1, h2 {
-                font-size: 1.25rem !important;
+                font-size: 1.125rem !important;
             }
-            
+
             .form-group label {
-                font-size: 0.875rem;
+                font-size: 0.8125rem;
             }
-            
+
             .form-group input,
             .form-group select,
             .form-group textarea {
-                padding: 0.5rem;
+                padding: 0.5rem 0.625rem;
                 font-size: 0.875rem;
             }
         }
@@ -739,39 +798,38 @@
         }
     </style>
 </head>
-<body style="min-height: 100vh; overflow-x: hidden; background: #f9fafb;">
+<body style="min-height: 100vh; overflow-x: hidden;">
     <!-- ヘッダー -->
-    <header style="background: white; border-bottom: 4px solid #E74C3C;" class="shadow-lg">
-        <div class="container mx-auto px-4 py-4 lg:py-6">
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-3 lg:gap-4">
-                    <!-- Soul Sync's Logo（画像） -->
-                    <img src="images/soul-syncs-logo.png" alt="Soul Sync's" style="height: 20px; width: auto;" class="flex-shrink-0">
-                    <div class="text-center lg:text-left">
-                        <h1 class="text-xl lg:text-3xl font-bold" style="font-family: 'Segoe UI', serif; letter-spacing: 0.5px; color: #1a1a1a;">組織図管理システム</h1>
-                    </div>
+    <header style="background: white; border-bottom: 3px solid #E74C3C; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <div class="container mx-auto px-3 lg:px-6 py-2.5 lg:py-3.5">
+            <!-- 上段: ロゴ + ユーティリティボタン -->
+            <div class="flex justify-between items-center gap-3">
+                <div class="flex items-center gap-2.5 flex-shrink-0">
+                    <img src="images/soul-syncs-logo.png" alt="Soul Sync's" style="height: 18px; width: auto;" class="flex-shrink-0">
+                    <h1 class="text-lg lg:text-2xl font-bold" style="font-family: 'Segoe UI', serif; letter-spacing: 0.3px; color: #1a1a1a; white-space: nowrap;">組織図管理システム</h1>
                 </div>
-                <div class="flex gap-2 lg:gap-3 flex-wrap justify-center">
-                    <button onclick="showHistory()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-history mr-1 lg:mr-2"></i><span class="hidden sm:inline">変更履歴</span><span class="sm:hidden">履歴</span>
+                <div class="flex gap-1.5 flex-wrap justify-end items-center">
+                    <button onclick="showHistory()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="変更履歴">
+                        <i class="fas fa-history"></i><span class="hidden md:inline">履歴</span>
                     </button>
-                    <button onclick="exportData()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-download mr-1 lg:mr-2"></i><span class="hidden md:inline">エクスポート</span><span class="md:hidden">出力</span>
+                    <button onclick="exportData()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="エクスポート">
+                        <i class="fas fa-download"></i><span class="hidden md:inline">出力</span>
                     </button>
-                    <button onclick="showImportModal()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-upload mr-1 lg:mr-2"></i><span class="hidden md:inline">インポート</span><span class="md:hidden">登録</span>
+                    <button onclick="showImportModal()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="インポート">
+                        <i class="fas fa-upload"></i><span class="hidden md:inline">登録</span>
                     </button>
-                    <button onclick="printToPDF()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-print mr-1 lg:mr-2"></i><span class="hidden sm:inline">PDF</span>
+                    <button onclick="printToPDF()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="PDF出力">
+                        <i class="fas fa-print"></i><span class="hidden lg:inline">PDF</span>
                     </button>
-                    <button onclick="showStatisticsModal()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-chart-bar mr-1 lg:mr-2"></i><span class="hidden sm:inline">統計</span>
+                    <button onclick="showStatisticsModal()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="統計">
+                        <i class="fas fa-chart-bar"></i><span class="hidden lg:inline">統計</span>
                     </button>
-                    <button onclick="copyViewOnlyURL()" class="btn btn-sm" style="background: #E74C3C; color: white; border: none;" title="閲覧専用URLをコピー">
-                        <i class="fas fa-link mr-1 lg:mr-2"></i><span class="hidden lg:inline">閲覧URL</span>
+                    <span class="hidden sm:inline-block w-px h-5 bg-gray-200 mx-0.5"></span>
+                    <button onclick="copyViewOnlyURL()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-white transition" style="background: #E74C3C;" title="閲覧専用URLをコピー">
+                        <i class="fas fa-link"></i><span class="hidden lg:inline">閲覧URL</span>
                     </button>
-                    <button onclick="openModal('chatworkSettingsModal')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600" style="border: none;" title="Chatwork通知設定">
-                        <i class="fas fa-comments mr-1 lg:mr-2"></i><span class="hidden lg:inline">Chatwork</span>
+                    <button onclick="openModal('chatworkSettingsModal')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-green-500 text-white hover:bg-green-600 transition" title="Chatwork通知設定">
+                        <i class="fas fa-comments"></i><span class="hidden lg:inline">Chatwork</span>
                     </button>
                 </div>
             </div>
@@ -779,71 +837,80 @@
     </header>
 
     <!-- メインコンテンツ -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-3 lg:px-6 py-4 lg:py-6">
         <!-- アクションバー -->
-        <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 mb-6 lg:mb-8 border border-gray-200">
-            <div class="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center mb-4">
-                <div class="flex flex-wrap gap-2 lg:gap-4 justify-center lg:justify-start">
-                    <button onclick="showAddEmployeeModal()" class="btn btn-primary flex-1 sm:flex-none">
-                        <i class="fas fa-user-plus mr-1 lg:mr-2"></i><span class="hidden sm:inline">社員を</span>追加
+        <div class="bg-white rounded-xl shadow-sm p-3 lg:p-5 mb-4 lg:mb-6 border border-gray-200">
+            <div class="flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center mb-3">
+                <div class="flex flex-wrap gap-2 justify-center lg:justify-start">
+                    <button onclick="showAddEmployeeModal()" class="btn btn-primary flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-user-plus mr-1"></i><span class="hidden sm:inline">社員を</span>追加
                     </button>
-                    <button onclick="showAddDepartmentModal()" class="btn btn-success flex-1 sm:flex-none">
-                        <i class="fas fa-building mr-1 lg:mr-2"></i><span class="hidden sm:inline">部署を</span>追加
+                    <button onclick="showAddDepartmentModal()" class="btn btn-success flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-building mr-1"></i><span class="hidden sm:inline">部署を</span>追加
                     </button>
-                    <button onclick="showMoveEmployeeModal()" class="btn bg-blue-500 text-white hover:bg-blue-600 flex-1 sm:flex-none">
-                        <i class="fas fa-exchange-alt mr-1 lg:mr-2"></i>異動
+                    <button onclick="showMoveEmployeeModal()" class="btn bg-blue-500 text-white hover:bg-blue-600 flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-exchange-alt mr-1"></i>異動
                     </button>
-                    <button onclick="refreshData()" class="btn bg-gray-500 text-white hover:bg-gray-600 flex-1 sm:flex-none">
-                        <i class="fas fa-sync-alt mr-1 lg:mr-2"></i>更新
+                    <button onclick="refreshData()" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i>更新
                     </button>
-                                    <button onclick="syncToSoulKun()" class="btn bg-purple-500 text-white hover:bg-purple-600 flex-1 sm:flex-none">
-                                                            <i class="fas fa-cloud-upload-alt mr-1 lg:mr-2"></i>i><span class="hidden sm:inline">ソウルくんに同期</span>
-                                    </button>                </div>
-                
+                    <button onclick="syncToSoulKun()" class="btn bg-purple-500 text-white hover:bg-purple-600 flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-cloud-upload-alt mr-1"></i><span class="hidden sm:inline">ソウルくんに同期</span><span class="sm:hidden">同期</span>
+                    </button>
+                </div>
+
                 <!-- 表示モード切替 -->
-                <div class="flex gap-1 lg:gap-2 bg-gray-100 p-1 rounded-lg w-full lg:w-auto">
-                    <button id="viewModeCard" onclick="setViewMode('card')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-white font-semibold transition text-sm lg:text-base" style="background: #E74C3C;">
-                        <i class="fas fa-id-card mr-1 lg:mr-2"></i><span class="hidden sm:inline">カード</span>
+                <div class="flex gap-0.5 bg-gray-100 p-0.5 rounded-lg w-full lg:w-auto flex-shrink-0">
+                    <button id="viewModeCard" onclick="setViewMode('card')" class="flex-1 lg:flex-none px-3 py-1.5 rounded-md text-white font-semibold transition text-sm" style="background: #E74C3C;">
+                        <i class="fas fa-id-card mr-1"></i><span class="hidden sm:inline">カード</span>
                     </button>
-                    <button id="viewModeTree" onclick="setViewMode('tree')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-gray-700 hover:bg-gray-200 transition text-sm lg:text-base">
-                        <i class="fas fa-sitemap mr-1 lg:mr-2"></i><span class="hidden sm:inline">ツリー</span>
+                    <button id="viewModeTree" onclick="setViewMode('tree')" class="flex-1 lg:flex-none px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-200 transition text-sm font-medium">
+                        <i class="fas fa-sitemap mr-1"></i><span class="hidden sm:inline">ツリー</span>
                     </button>
-                    <button id="viewModeList" onclick="setViewMode('list')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-gray-700 hover:bg-gray-200 transition text-sm lg:text-base">
-                        <i class="fas fa-list mr-1 lg:mr-2"></i><span class="hidden sm:inline">リスト</span>
+                    <button id="viewModeList" onclick="setViewMode('list')" class="flex-1 lg:flex-none px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-200 transition text-sm font-medium">
+                        <i class="fas fa-list mr-1"></i><span class="hidden sm:inline">リスト</span>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 検索バー -->
-            <div class="mt-4">
-                <input type="text" id="searchInput" placeholder="社員名・部署名で検索..." 
-                       class="w-full px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base border-2 border-gray-300 rounded-lg focus:outline-none"
-                       style="border-color: var(--soul-red); box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);"
-                       onkeyup="filterOrganization()">
+            <div class="relative mt-3">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" id="searchInput" placeholder="社員名・部署名で検索..."
+                       class="w-full pl-9 pr-9 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-50 bg-gray-50 focus:bg-white transition"
+                       onkeyup="filterOrganization(); toggleSearchClear();">
+                <button onclick="clearSearch()" id="searchClearBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition hidden" title="クリア">
+                    <i class="fas fa-times-circle text-sm"></i>
+                </button>
             </div>
-            
+
             <!-- フィルターバー -->
-            <div class="mt-4 p-3 lg:p-4 bg-gray-50 rounded-lg">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-semibold text-gray-700 text-sm lg:text-base">
-                        <i class="fas fa-filter mr-2"></i>フィルター
-                    </h3>
-                    <button onclick="clearFilters()" class="text-xs lg:text-sm hover:underline" style="color: #E74C3C;">
-                        <i class="fas fa-undo mr-1"></i>クリア
-                    </button>
+            <div class="mt-3 bg-gray-50 border border-gray-100 rounded-lg overflow-hidden">
+                <div class="flex items-center justify-between px-3 py-2 cursor-pointer select-none hover:bg-gray-100 transition" onclick="toggleFilterBar()">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-filter text-gray-400 text-xs"></i>
+                        <span class="font-semibold text-gray-600 text-xs uppercase tracking-wide">フィルター</span>
+                        <span id="filterBadgeCount" class="hidden bg-red-500 text-white text-xs font-bold px-1.5 py-0 rounded-full min-w-[18px] text-center" style="font-size: 10px;"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="event.stopPropagation(); clearFilters()" class="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-0.5 rounded hover:bg-red-50 transition">
+                            <i class="fas fa-undo mr-1"></i>クリア
+                        </button>
+                        <i id="filterToggleIcon" class="fas fa-chevron-down text-gray-400 text-xs transition-transform"></i>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                <div id="filterBody" class="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                     <!-- 部署フィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">部署</label>
-                        <select id="filterDepartment" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">部署</label>
+                        <select id="filterDepartment" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="">すべて</option>
                         </select>
                     </div>
                     <!-- 雇用形態フィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">雇用形態</label>
-                        <select id="filterEmploymentType" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">雇用形態</label>
+                        <select id="filterEmploymentType" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="">すべて</option>
                             <option value="社員">社員</option>
                             <option value="業務委託">業務委託</option>
@@ -852,8 +919,8 @@
                     </div>
                     <!-- スキルフィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">スキル</label>
-                        <select id="filterSkill" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">スキル</label>
+                        <select id="filterSkill" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="">すべて</option>
                             <option value="営業">営業</option>
                             <option value="マーケティング">マーケティング</option>
@@ -870,8 +937,8 @@
                     </div>
                     <!-- 在籍状況フィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">在籍状況</label>
-                        <select id="filterActiveStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">在籍状況</label>
+                        <select id="filterActiveStatus" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="active">在籍中のみ</option>
                             <option value="all">すべて</option>
                             <option value="inactive">退職者のみ</option>
@@ -882,48 +949,59 @@
         </div>
 
         <!-- 統計情報 -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6 lg:mb-8">
-            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 lg:gap-3 mb-4 lg:mb-6">
+            <div class="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:shadow-md transition">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-xs lg:text-sm">総従業員数</p>
-                        <p class="text-2xl lg:text-3xl font-bold" style="color: var(--soul-red);" id="totalEmployees">0</p>
+                        <p class="text-gray-400 text-xs font-medium mb-0.5">総従業員数</p>
+                        <p class="text-xl lg:text-2xl font-bold" style="color: var(--soul-red);" id="totalEmployees">0</p>
                     </div>
-                    <i class="fas fa-users text-2xl lg:text-4xl opacity-30" style="color: var(--soul-red);"></i>
+                    <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center" style="background: rgba(231,76,60,0.08);">
+                        <i class="fas fa-users text-sm lg:text-base" style="color: var(--soul-red);"></i>
+                    </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+            <div class="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:shadow-md transition">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-xs lg:text-sm">社員</p>
-                        <p class="text-2xl lg:text-3xl font-bold" style="color: var(--soul-black);" id="regularEmployees">0</p>
+                        <p class="text-gray-400 text-xs font-medium mb-0.5">社員</p>
+                        <p class="text-xl lg:text-2xl font-bold" style="color: var(--soul-black);" id="regularEmployees">0</p>
                     </div>
-                    <i class="fas fa-user-tie text-2xl lg:text-4xl opacity-30" style="color: var(--soul-black);"></i>
+                    <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center bg-gray-100">
+                        <i class="fas fa-user-tie text-sm lg:text-base text-gray-500"></i>
+                    </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+            <div class="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:shadow-md transition">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-xs lg:text-sm">業務委託</p>
-                        <p class="text-2xl lg:text-3xl font-bold" style="color: #f39c12;" id="contractors">0</p>
+                        <p class="text-gray-400 text-xs font-medium mb-0.5">業務委託</p>
+                        <p class="text-xl lg:text-2xl font-bold" style="color: #f39c12;" id="contractors">0</p>
                     </div>
-                    <i class="fas fa-handshake text-2xl lg:text-4xl opacity-30" style="color: #f39c12;"></i>
+                    <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center" style="background: rgba(243,156,18,0.08);">
+                        <i class="fas fa-handshake text-sm lg:text-base" style="color: #f39c12;"></i>
+                    </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 border border-gray-200">
+            <div class="bg-white rounded-xl p-3 lg:p-4 border border-gray-200 hover:shadow-md transition">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-gray-500 text-xs lg:text-sm">部署数</p>
-                        <p class="text-2xl lg:text-3xl font-bold" style="color: var(--soul-dark-gray);" id="totalDepartments">0</p>
+                        <p class="text-gray-400 text-xs font-medium mb-0.5">部署数</p>
+                        <p class="text-xl lg:text-2xl font-bold" style="color: var(--soul-dark-gray);" id="totalDepartments">0</p>
                     </div>
-                    <i class="fas fa-building text-2xl lg:text-4xl opacity-30" style="color: var(--soul-dark-gray);"></i>
+                    <div class="w-9 h-9 lg:w-10 lg:h-10 rounded-lg flex items-center justify-center bg-gray-100">
+                        <i class="fas fa-building text-sm lg:text-base text-gray-500"></i>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 組織図表示エリア -->
-        <div id="organizationChart" class="bg-white rounded-lg shadow-sm p-4 lg:p-8 border border-gray-200">
-            <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-4 lg:mb-6">組織図</h2>
+        <div id="organizationChart" class="bg-white rounded-xl shadow-sm p-3 lg:p-6 border border-gray-200">
+            <div class="flex items-center gap-2 mb-3 lg:mb-4 pb-2.5 border-b border-gray-100">
+                <i class="fas fa-sitemap text-sm" style="color: var(--soul-red);"></i>
+                <h2 class="text-base lg:text-lg font-bold text-gray-800">組織図</h2>
+            </div>
             <div id="chartContainer"></div>
         </div>
     </main>
@@ -931,99 +1009,115 @@
     <!-- 社員追加モーダル -->
     <div id="addEmployeeModal" class="modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">社員を追加</h2>
-                <button onclick="closeModal('addEmployeeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-user-plus mr-2 text-sm" style="color: var(--soul-red);"></i>社員を追加</h2>
+                <button onclick="closeModal('addEmployeeModal')" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form id="addEmployeeForm" onsubmit="addEmployee(event)">
-                <div class="form-group">
-                    <label>氏名 *</label>
-                    <input type="text" id="empName" required>
-                </div>
-                <div class="form-group">
-                    <label>主所属部署 *</label>
-                    <select id="empDepartment" required></select>
-                </div>
-                <div class="form-group">
-                    <label>主役職</label>
-                    <select id="empRoleId">
-                        <option value="">役職を選択...</option>
-                    </select>
-                    <!-- 後方互換性: 非表示のposition入力（将来削除予定） -->
-                    <input type="hidden" id="empPosition">
-                </div>
-
-                <!-- 兼務部署 -->
-                <div class="form-group">
-                    <label>兼務部署</label>
-                    <div id="additionalDepartments"></div>
-                    <button type="button" onclick="addDepartmentField()" class="btn bg-blue-500 text-white mt-2">
-                        <i class="fas fa-plus mr-2"></i>部署を追加
-                    </button>
-                </div>
-                
-                <!-- ソウルくん連携（重要） -->
-                <div class="form-group">
-                    <label class="flex items-center gap-2">
-                        <span>ChatWork ID</span>
-                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
-                    </label>
-                    <input type="text" id="empChatworkId" placeholder="1234567" pattern="[0-9]*">
-                    <p class="text-xs text-gray-500 mt-1">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
-                    </p>
+                <!-- セクション: 基本情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-user mr-1"></i>基本情報</p>
+                    <div class="form-group">
+                        <label>氏名 *</label>
+                        <input type="text" id="empName" required>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>主所属部署 *</label>
+                            <select id="empDepartment" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>主役職</label>
+                            <select id="empRoleId">
+                                <option value="">役職を選択...</option>
+                            </select>
+                            <input type="hidden" id="empPosition">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>兼務部署</label>
+                        <div id="additionalDepartments"></div>
+                        <button type="button" onclick="addDepartmentField()" class="btn bg-blue-500 text-white mt-2 text-sm">
+                            <i class="fas fa-plus mr-1"></i>部署を追加
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>雇用形態 *</label>
+                        <select id="empType" required>
+                            <option value="社員">社員</option>
+                            <option value="業務委託">業務委託</option>
+                            <option value="パート">パート</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>会社メールアドレス</label>
-                    <input type="email" id="empEmailCompany" placeholder="example@soulsync.co.jp">
-                </div>
-                <div class="form-group">
-                    <label>Gmailアカウント</label>
-                    <input type="email" id="empEmailGmail" placeholder="example@gmail.com">
-                </div>
-                <div class="form-group">
-                    <label>共有先メールアドレス</label>
-                    <input type="email" id="empEmailShared" placeholder="shared@example.com">
-                </div>
-                <div class="form-group">
-                    <label>電話番号</label>
-                    <input type="tel" id="empPhone">
-                </div>
-                <div class="form-group">
-                    <label>誕生日</label>
-                    <input type="date" id="empBirthday">
-                </div>
-                <div class="form-group">
-                    <label>プロフィールページURL（Canva等）</label>
-                    <input type="url" id="empProfileUrl" placeholder="https://...">
+                <!-- セクション: 連絡先 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-address-book mr-1"></i>連絡先</p>
+                    <div class="form-group">
+                        <label class="flex items-center gap-2">
+                            <span>ChatWork ID</span>
+                            <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
+                        </label>
+                        <input type="text" id="empChatworkId" placeholder="1234567" pattern="[0-9]*">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>会社メール</label>
+                            <input type="email" id="empEmailCompany" placeholder="example@soulsync.co.jp">
+                        </div>
+                        <div class="form-group">
+                            <label>Gmail</label>
+                            <input type="email" id="empEmailGmail" placeholder="example@gmail.com">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>共有先メール</label>
+                            <input type="email" id="empEmailShared" placeholder="shared@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>電話番号</label>
+                            <input type="tel" id="empPhone">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>プロフィールURL（Canva等）</label>
+                        <input type="url" id="empProfileUrl" placeholder="https://...">
+                    </div>
                 </div>
 
-                <!-- 雇用情報 -->
-                <div class="form-group">
-                    <label>雇用形態 *</label>
-                    <select id="empType" required>
-                        <option value="社員">社員</option>
-                        <option value="業務委託">業務委託</option>
-                        <option value="パート">パート</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>入社日</label>
-                    <input type="date" id="empHireDate">
-                </div>
-                <div class="form-group">
-                    <label>退社日</label>
-                    <input type="date" id="empResignationDate">
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="empIsActive" checked class="mr-2">
-                        在籍中
-                    </label>
+                <!-- セクション: 在籍情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-calendar-alt mr-1"></i>在籍情報</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>誕生日</label>
+                            <input type="date" id="empBirthday">
+                        </div>
+                        <div class="form-group">
+                            <label>入社日</label>
+                            <input type="date" id="empHireDate">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>退社日</label>
+                            <input type="date" id="empResignationDate">
+                        </div>
+                        <div class="form-group flex items-end pb-1">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="empIsActive" checked class="mr-2">
+                                在籍中
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- スキル・資格 -->
@@ -1193,99 +1287,116 @@
     <!-- 社員編集モーダル -->
     <div id="editEmployeeModal" class="modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">社員情報を編集</h2>
-                <button onclick="closeModal('editEmployeeModal')" class="text-gray-500 hover:text-gray-700 text-2xl">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800"><i class="fas fa-user-edit mr-2 text-sm" style="color: var(--soul-red);"></i>社員情報を編集</h2>
+                <button onclick="closeModal('editEmployeeModal')" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <form id="editEmployeeForm" onsubmit="updateEmployee(event)">
                 <input type="hidden" id="editEmpId">
-                <div class="form-group">
-                    <label>氏名 *</label>
-                    <input type="text" id="editEmpName" required>
-                </div>
-                <div class="form-group">
-                    <label>主所属部署 *</label>
-                    <select id="editEmpDepartment" required></select>
-                </div>
-                <div class="form-group">
-                    <label>主役職</label>
-                    <select id="editEmpRoleId">
-                        <option value="">役職を選択...</option>
-                    </select>
-                    <!-- 後方互換性: 非表示のposition入力（将来削除予定） -->
-                    <input type="hidden" id="editEmpPosition">
-                </div>
-
-                <!-- 兼務部署 -->
-                <div class="form-group">
-                    <label>兼務部署</label>
-                    <div id="editAdditionalDepartments"></div>
-                    <button type="button" onclick="addEditDepartmentField()" class="btn bg-blue-500 text-white mt-2">
-                        <i class="fas fa-plus mr-2"></i>部署を追加
-                    </button>
-                </div>
-                
-                <!-- ソウルくん連携（重要） -->
-                <div class="form-group">
-                    <label class="flex items-center gap-2">
-                        <span>ChatWork ID</span>
-                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
-                    </label>
-                    <input type="text" id="editEmpChatworkId" placeholder="1234567" pattern="[0-9]*">
-                    <p class="text-xs text-gray-500 mt-1">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
-                    </p>
+                <!-- セクション: 基本情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-user mr-1"></i>基本情報</p>
+                    <div class="form-group">
+                        <label>氏名 *</label>
+                        <input type="text" id="editEmpName" required>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>主所属部署 *</label>
+                            <select id="editEmpDepartment" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label>主役職</label>
+                            <select id="editEmpRoleId">
+                                <option value="">役職を選択...</option>
+                            </select>
+                            <input type="hidden" id="editEmpPosition">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>兼務部署</label>
+                        <div id="editAdditionalDepartments"></div>
+                        <button type="button" onclick="addEditDepartmentField()" class="btn bg-blue-500 text-white mt-2 text-sm">
+                            <i class="fas fa-plus mr-1"></i>部署を追加
+                        </button>
+                    </div>
+                    <div class="form-group">
+                        <label>雇用形態 *</label>
+                        <select id="editEmpType" required>
+                            <option value="社員">社員</option>
+                            <option value="業務委託">業務委託</option>
+                            <option value="パート">パート</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>会社メールアドレス</label>
-                    <input type="email" id="editEmpEmailCompany" placeholder="example@soulsync.co.jp">
+                <!-- セクション: 連絡先 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-address-book mr-1"></i>連絡先</p>
+                    <div class="form-group">
+                        <label class="flex items-center gap-2">
+                            <span>ChatWork ID</span>
+                            <span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">ソウルくん連携</span>
+                        </label>
+                        <input type="text" id="editEmpChatworkId" placeholder="1234567" pattern="[0-9]*">
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            ChatWorkのマイページURL末尾の数字（例: chatwork.com/rid/1234567 → 1234567）
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>会社メール</label>
+                            <input type="email" id="editEmpEmailCompany" placeholder="example@soulsync.co.jp">
+                        </div>
+                        <div class="form-group">
+                            <label>Gmail</label>
+                            <input type="email" id="editEmpEmailGmail" placeholder="example@gmail.com">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>共有先メール</label>
+                            <input type="email" id="editEmpEmailShared" placeholder="shared@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>電話番号</label>
+                            <input type="tel" id="editEmpPhone">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>プロフィールURL（Canva等）</label>
+                        <input type="url" id="editEmpProfileUrl" placeholder="https://...">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Gmailアカウント</label>
-                    <input type="email" id="editEmpEmailGmail" placeholder="example@gmail.com">
-                </div>
-                <div class="form-group">
-                    <label>共有先メールアドレス</label>
-                    <input type="email" id="editEmpEmailShared" placeholder="shared@example.com">
-                </div>
-                <div class="form-group">
-                    <label>電話番号</label>
-                    <input type="tel" id="editEmpPhone">
-                </div>
-                <div class="form-group">
-                    <label>誕生日</label>
-                    <input type="date" id="editEmpBirthday">
-                </div>
-                <div class="form-group">
-                    <label>プロフィールページURL（Canva等）</label>
-                    <input type="url" id="editEmpProfileUrl" placeholder="https://...">
-                </div>
-                <!-- 雇用情報 -->
-                <div class="form-group">
-                    <label>雇用形態 *</label>
-                    <select id="editEmpType" required>
-                        <option value="社員">社員</option>
-                        <option value="業務委託">業務委託</option>
-                        <option value="パート">パート</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>入社日</label>
-                    <input type="date" id="editEmpHireDate">
-                </div>
-                <div class="form-group">
-                    <label>退社日</label>
-                    <input type="date" id="editEmpResignationDate">
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="editEmpIsActive" class="mr-2">
-                        在籍中
-                    </label>
+
+                <!-- セクション: 在籍情報 -->
+                <div class="mb-4 pb-4 border-b border-gray-100">
+                    <p class="text-xs font-bold text-red-500 uppercase tracking-wide mb-3"><i class="fas fa-calendar-alt mr-1"></i>在籍情報</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>誕生日</label>
+                            <input type="date" id="editEmpBirthday">
+                        </div>
+                        <div class="form-group">
+                            <label>入社日</label>
+                            <input type="date" id="editEmpHireDate">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="form-group">
+                            <label>退社日</label>
+                            <input type="date" id="editEmpResignationDate">
+                        </div>
+                        <div class="form-group flex items-end pb-1">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="editEmpIsActive" class="mr-2">
+                                在籍中
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- スキル・資格 -->

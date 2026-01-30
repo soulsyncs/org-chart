@@ -3772,6 +3772,69 @@ function saveApiToken() {
     localStorage.setItem('soulsyncs_api_token', token);
     showNotification('APIトークンを保存しました', 'success');
 }
+// ============================================
+// UI ヘルパー（検索クリア・フィルター折りたたみ）
+// ============================================
+
+// 検索バーのクリアボタン表示切替
+function toggleSearchClear() {
+    const input = document.getElementById('searchInput');
+    const btn = document.getElementById('searchClearBtn');
+    if (!input || !btn) return;
+    if (input.value.length > 0) {
+        btn.classList.remove('hidden');
+    } else {
+        btn.classList.add('hidden');
+    }
+}
+
+// 検索バーをクリア
+function clearSearch() {
+    const input = document.getElementById('searchInput');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+    const btn = document.getElementById('searchClearBtn');
+    if (btn) btn.classList.add('hidden');
+    filterOrganization();
+}
+
+// フィルターバーの折りたたみ
+function toggleFilterBar() {
+    const body = document.getElementById('filterBody');
+    const icon = document.getElementById('filterToggleIcon');
+    if (!body) return;
+    if (body.style.display === 'none') {
+        body.style.display = '';
+        if (icon) icon.style.transform = '';
+    } else {
+        body.style.display = 'none';
+        if (icon) icon.style.transform = 'rotate(-90deg)';
+    }
+}
+
+// アクティブなフィルター数のバッジ更新
+function updateFilterBadge() {
+    const badge = document.getElementById('filterBadgeCount');
+    if (!badge) return;
+    let count = 0;
+    const dept = document.getElementById('filterDepartment');
+    const empType = document.getElementById('filterEmploymentType');
+    const skill = document.getElementById('filterSkill');
+    const status = document.getElementById('filterActiveStatus');
+    if (dept && dept.value) count++;
+    if (empType && empType.value) count++;
+    if (skill && skill.value) count++;
+    if (status && status.value !== 'active') count++;
+    if (count > 0) {
+        badge.textContent = count;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
 // ページ読み込み完了時の初期化（ファイル末尾に配置）
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('DOMContentLoaded: JavaScript is fully loaded');
