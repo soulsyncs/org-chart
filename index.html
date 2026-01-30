@@ -786,71 +786,80 @@
     </header>
 
     <!-- メインコンテンツ -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-3 lg:px-6 py-4 lg:py-6">
         <!-- アクションバー -->
-        <div class="bg-white rounded-lg shadow-sm p-4 lg:p-6 mb-6 lg:mb-8 border border-gray-200">
-            <div class="flex flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center mb-4">
-                <div class="flex flex-wrap gap-2 lg:gap-4 justify-center lg:justify-start">
-                    <button onclick="showAddEmployeeModal()" class="btn btn-primary flex-1 sm:flex-none">
-                        <i class="fas fa-user-plus mr-1 lg:mr-2"></i><span class="hidden sm:inline">社員を</span>追加
+        <div class="bg-white rounded-xl shadow-sm p-3 lg:p-5 mb-4 lg:mb-6 border border-gray-200">
+            <div class="flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center mb-3">
+                <div class="flex flex-wrap gap-2 justify-center lg:justify-start">
+                    <button onclick="showAddEmployeeModal()" class="btn btn-primary flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-user-plus mr-1"></i><span class="hidden sm:inline">社員を</span>追加
                     </button>
-                    <button onclick="showAddDepartmentModal()" class="btn btn-success flex-1 sm:flex-none">
-                        <i class="fas fa-building mr-1 lg:mr-2"></i><span class="hidden sm:inline">部署を</span>追加
+                    <button onclick="showAddDepartmentModal()" class="btn btn-success flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-building mr-1"></i><span class="hidden sm:inline">部署を</span>追加
                     </button>
-                    <button onclick="showMoveEmployeeModal()" class="btn bg-blue-500 text-white hover:bg-blue-600 flex-1 sm:flex-none">
-                        <i class="fas fa-exchange-alt mr-1 lg:mr-2"></i>異動
+                    <button onclick="showMoveEmployeeModal()" class="btn bg-blue-500 text-white hover:bg-blue-600 flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-exchange-alt mr-1"></i>異動
                     </button>
-                    <button onclick="refreshData()" class="btn bg-gray-500 text-white hover:bg-gray-600 flex-1 sm:flex-none">
-                        <i class="fas fa-sync-alt mr-1 lg:mr-2"></i>更新
+                    <button onclick="refreshData()" class="btn bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200 flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i>更新
                     </button>
-                                    <button onclick="syncToSoulKun()" class="btn bg-purple-500 text-white hover:bg-purple-600 flex-1 sm:flex-none">
-                                                            <i class="fas fa-cloud-upload-alt mr-1 lg:mr-2"></i>i><span class="hidden sm:inline">ソウルくんに同期</span>
-                                    </button>                </div>
-                
+                    <button onclick="syncToSoulKun()" class="btn bg-purple-500 text-white hover:bg-purple-600 flex-1 sm:flex-none text-sm">
+                        <i class="fas fa-cloud-upload-alt mr-1"></i><span class="hidden sm:inline">ソウルくんに同期</span><span class="sm:hidden">同期</span>
+                    </button>
+                </div>
+
                 <!-- 表示モード切替 -->
-                <div class="flex gap-1 lg:gap-2 bg-gray-100 p-1 rounded-lg w-full lg:w-auto">
-                    <button id="viewModeCard" onclick="setViewMode('card')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-white font-semibold transition text-sm lg:text-base" style="background: #E74C3C;">
-                        <i class="fas fa-id-card mr-1 lg:mr-2"></i><span class="hidden sm:inline">カード</span>
+                <div class="flex gap-0.5 bg-gray-100 p-0.5 rounded-lg w-full lg:w-auto flex-shrink-0">
+                    <button id="viewModeCard" onclick="setViewMode('card')" class="flex-1 lg:flex-none px-3 py-1.5 rounded-md text-white font-semibold transition text-sm" style="background: #E74C3C;">
+                        <i class="fas fa-id-card mr-1"></i><span class="hidden sm:inline">カード</span>
                     </button>
-                    <button id="viewModeTree" onclick="setViewMode('tree')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-gray-700 hover:bg-gray-200 transition text-sm lg:text-base">
-                        <i class="fas fa-sitemap mr-1 lg:mr-2"></i><span class="hidden sm:inline">ツリー</span>
+                    <button id="viewModeTree" onclick="setViewMode('tree')" class="flex-1 lg:flex-none px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-200 transition text-sm font-medium">
+                        <i class="fas fa-sitemap mr-1"></i><span class="hidden sm:inline">ツリー</span>
                     </button>
-                    <button id="viewModeList" onclick="setViewMode('list')" class="flex-1 lg:flex-none px-3 lg:px-4 py-2 rounded text-gray-700 hover:bg-gray-200 transition text-sm lg:text-base">
-                        <i class="fas fa-list mr-1 lg:mr-2"></i><span class="hidden sm:inline">リスト</span>
+                    <button id="viewModeList" onclick="setViewMode('list')" class="flex-1 lg:flex-none px-3 py-1.5 rounded-md text-gray-600 hover:bg-gray-200 transition text-sm font-medium">
+                        <i class="fas fa-list mr-1"></i><span class="hidden sm:inline">リスト</span>
                     </button>
                 </div>
             </div>
-            
+
             <!-- 検索バー -->
-            <div class="mt-4">
-                <input type="text" id="searchInput" placeholder="社員名・部署名で検索..." 
-                       class="w-full px-3 lg:px-4 py-2 lg:py-3 text-sm lg:text-base border-2 border-gray-300 rounded-lg focus:outline-none"
-                       style="border-color: var(--soul-red); box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);"
-                       onkeyup="filterOrganization()">
+            <div class="relative mt-3">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"></i>
+                <input type="text" id="searchInput" placeholder="社員名・部署名で検索..."
+                       class="w-full pl-9 pr-9 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-50 bg-gray-50 focus:bg-white transition"
+                       onkeyup="filterOrganization(); toggleSearchClear();">
+                <button onclick="clearSearch()" id="searchClearBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition hidden" title="クリア">
+                    <i class="fas fa-times-circle text-sm"></i>
+                </button>
             </div>
-            
+
             <!-- フィルターバー -->
-            <div class="mt-4 p-3 lg:p-4 bg-gray-50 rounded-lg">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-semibold text-gray-700 text-sm lg:text-base">
-                        <i class="fas fa-filter mr-2"></i>フィルター
-                    </h3>
-                    <button onclick="clearFilters()" class="text-xs lg:text-sm hover:underline" style="color: #E74C3C;">
-                        <i class="fas fa-undo mr-1"></i>クリア
-                    </button>
+            <div class="mt-3 bg-gray-50 border border-gray-100 rounded-lg overflow-hidden">
+                <div class="flex items-center justify-between px-3 py-2 cursor-pointer select-none hover:bg-gray-100 transition" onclick="toggleFilterBar()">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-filter text-gray-400 text-xs"></i>
+                        <span class="font-semibold text-gray-600 text-xs uppercase tracking-wide">フィルター</span>
+                        <span id="filterBadgeCount" class="hidden bg-red-500 text-white text-xs font-bold px-1.5 py-0 rounded-full min-w-[18px] text-center" style="font-size: 10px;"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="event.stopPropagation(); clearFilters()" class="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-0.5 rounded hover:bg-red-50 transition">
+                            <i class="fas fa-undo mr-1"></i>クリア
+                        </button>
+                        <i id="filterToggleIcon" class="fas fa-chevron-down text-gray-400 text-xs transition-transform"></i>
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                <div id="filterBody" class="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                     <!-- 部署フィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">部署</label>
-                        <select id="filterDepartment" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">部署</label>
+                        <select id="filterDepartment" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="">すべて</option>
                         </select>
                     </div>
                     <!-- 雇用形態フィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">雇用形態</label>
-                        <select id="filterEmploymentType" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">雇用形態</label>
+                        <select id="filterEmploymentType" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="">すべて</option>
                             <option value="社員">社員</option>
                             <option value="業務委託">業務委託</option>
@@ -859,8 +868,8 @@
                     </div>
                     <!-- スキルフィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">スキル</label>
-                        <select id="filterSkill" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">スキル</label>
+                        <select id="filterSkill" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="">すべて</option>
                             <option value="営業">営業</option>
                             <option value="マーケティング">マーケティング</option>
@@ -877,8 +886,8 @@
                     </div>
                     <!-- 在籍状況フィルター -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">在籍状況</label>
-                        <select id="filterActiveStatus" class="w-full px-3 py-2 border border-gray-300 rounded-lg" onchange="filterOrganization()">
+                        <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">在籍状況</label>
+                        <select id="filterActiveStatus" class="w-full px-2.5 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-50 transition" onchange="filterOrganization(); updateFilterBadge();">
                             <option value="active">在籍中のみ</option>
                             <option value="all">すべて</option>
                             <option value="inactive">退職者のみ</option>
