@@ -490,20 +490,37 @@
         
         .modal-content {
             background-color: white;
-            margin: 5% auto;
-            padding: 2rem;
+            margin: 3% auto;
+            padding: 1.75rem;
             border-radius: 16px;
             width: 90%;
             max-width: 600px;
-            max-height: 85vh;
+            max-height: 88vh;
             overflow-y: auto;
-            box-shadow: 0 24px 48px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+            animation: modalSlideIn 0.25s ease;
         }
-        
+
+        .modal-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
         @keyframes modalSlideIn {
             from {
-                transform: translateY(-50px);
+                transform: translateY(-30px);
                 opacity: 0;
             }
             to {
@@ -563,33 +580,36 @@
         }
         
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
-        
+
         .form-group label {
             display: block;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.375rem;
             color: #334155;
+            font-size: 0.875rem;
         }
-        
+
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e2e8f0;
+            padding: 0.5625rem 0.75rem;
+            border: 1.5px solid #e2e8f0;
             border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+            background: #fafbfc;
         }
-        
+
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
             border-color: var(--soul-red);
-            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+            box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.08);
+            background: white;
         }
         
         .history-item {
@@ -664,23 +684,23 @@
         @media (max-width: 768px) {
             .modal-content {
                 width: 95%;
-                margin: 5% auto;
-                padding: 1.5rem;
-                max-height: 90vh;
+                margin: 2% auto;
+                padding: 1.25rem;
+                max-height: 92vh;
             }
-            
+
             h1, h2 {
-                font-size: 1.25rem !important;
+                font-size: 1.125rem !important;
             }
-            
+
             .form-group label {
-                font-size: 0.875rem;
+                font-size: 0.8125rem;
             }
-            
+
             .form-group input,
             .form-group select,
             .form-group textarea {
-                padding: 0.5rem;
+                padding: 0.5rem 0.625rem;
                 font-size: 0.875rem;
             }
         }
