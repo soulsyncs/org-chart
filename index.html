@@ -747,39 +747,38 @@
         }
     </style>
 </head>
-<body style="min-height: 100vh; overflow-x: hidden; background: #f9fafb;">
+<body style="min-height: 100vh; overflow-x: hidden;">
     <!-- ヘッダー -->
-    <header style="background: white; border-bottom: 4px solid #E74C3C;" class="shadow-lg">
-        <div class="container mx-auto px-4 py-4 lg:py-6">
-            <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-3 lg:gap-4">
-                    <!-- Soul Sync's Logo（画像） -->
-                    <img src="images/soul-syncs-logo.png" alt="Soul Sync's" style="height: 20px; width: auto;" class="flex-shrink-0">
-                    <div class="text-center lg:text-left">
-                        <h1 class="text-xl lg:text-3xl font-bold" style="font-family: 'Segoe UI', serif; letter-spacing: 0.5px; color: #1a1a1a;">組織図管理システム</h1>
-                    </div>
+    <header style="background: white; border-bottom: 3px solid #E74C3C; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+        <div class="container mx-auto px-3 lg:px-6 py-2.5 lg:py-3.5">
+            <!-- 上段: ロゴ + ユーティリティボタン -->
+            <div class="flex justify-between items-center gap-3">
+                <div class="flex items-center gap-2.5 flex-shrink-0">
+                    <img src="images/soul-syncs-logo.png" alt="Soul Sync's" style="height: 18px; width: auto;" class="flex-shrink-0">
+                    <h1 class="text-lg lg:text-2xl font-bold" style="font-family: 'Segoe UI', serif; letter-spacing: 0.3px; color: #1a1a1a; white-space: nowrap;">組織図管理システム</h1>
                 </div>
-                <div class="flex gap-2 lg:gap-3 flex-wrap justify-center">
-                    <button onclick="showHistory()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-history mr-1 lg:mr-2"></i><span class="hidden sm:inline">変更履歴</span><span class="sm:hidden">履歴</span>
+                <div class="flex gap-1.5 flex-wrap justify-end items-center">
+                    <button onclick="showHistory()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="変更履歴">
+                        <i class="fas fa-history"></i><span class="hidden md:inline">履歴</span>
                     </button>
-                    <button onclick="exportData()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-download mr-1 lg:mr-2"></i><span class="hidden md:inline">エクスポート</span><span class="md:hidden">出力</span>
+                    <button onclick="exportData()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="エクスポート">
+                        <i class="fas fa-download"></i><span class="hidden md:inline">出力</span>
                     </button>
-                    <button onclick="showImportModal()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-upload mr-1 lg:mr-2"></i><span class="hidden md:inline">インポート</span><span class="md:hidden">登録</span>
+                    <button onclick="showImportModal()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="インポート">
+                        <i class="fas fa-upload"></i><span class="hidden md:inline">登録</span>
                     </button>
-                    <button onclick="printToPDF()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-print mr-1 lg:mr-2"></i><span class="hidden sm:inline">PDF</span>
+                    <button onclick="printToPDF()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="PDF出力">
+                        <i class="fas fa-print"></i><span class="hidden lg:inline">PDF</span>
                     </button>
-                    <button onclick="showStatisticsModal()" class="btn btn-sm bg-gray-100 hover:bg-gray-200" style="color: #1a1a1a; border: 1px solid #e5e7eb;">
-                        <i class="fas fa-chart-bar mr-1 lg:mr-2"></i><span class="hidden sm:inline">統計</span>
+                    <button onclick="showStatisticsModal()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 transition" title="統計">
+                        <i class="fas fa-chart-bar"></i><span class="hidden lg:inline">統計</span>
                     </button>
-                    <button onclick="copyViewOnlyURL()" class="btn btn-sm" style="background: #E74C3C; color: white; border: none;" title="閲覧専用URLをコピー">
-                        <i class="fas fa-link mr-1 lg:mr-2"></i><span class="hidden lg:inline">閲覧URL</span>
+                    <span class="hidden sm:inline-block w-px h-5 bg-gray-200 mx-0.5"></span>
+                    <button onclick="copyViewOnlyURL()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold text-white transition" style="background: #E74C3C;" title="閲覧専用URLをコピー">
+                        <i class="fas fa-link"></i><span class="hidden lg:inline">閲覧URL</span>
                     </button>
-                    <button onclick="openModal('chatworkSettingsModal')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600" style="border: none;" title="Chatwork通知設定">
-                        <i class="fas fa-comments mr-1 lg:mr-2"></i><span class="hidden lg:inline">Chatwork</span>
+                    <button onclick="openModal('chatworkSettingsModal')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-green-500 text-white hover:bg-green-600 transition" title="Chatwork通知設定">
+                        <i class="fas fa-comments"></i><span class="hidden lg:inline">Chatwork</span>
                     </button>
                 </div>
             </div>
