@@ -2370,7 +2370,9 @@ function showEmployeeDetail(empId) {
                 <p class="text-gray-600 whitespace-pre-wrap">${employee.notes}</p>
             </div>
         ` : ''}
-        
+
+        <div id="adminNotesSection"></div>
+
         <div class="border-t border-gray-200 my-4"></div>
         
         <div class="flex gap-3 justify-center">
@@ -2390,6 +2392,219 @@ function showEmployeeDetail(empId) {
     
     document.getElementById('employeeDetailContent').innerHTML = content;
     openModal('employeeDetailModal');
+
+    // admin権限の場合のみ代表メモを読み込み
+    if (typeof hasPermission === 'function' && hasPermission('admin')) {
+        loadAdminNotes(empId);
+    }
+}
+
+// ============================================
+// 代表専用メモ（admin権限のみ）
+// ============================================
+
+async function loadAdminNotes(empId) {
+    const section = document.getElementById('adminNotesSection');
+    if (!section) return;
+
+    const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const adminEmail = currentUser?.email;
+    if (!adminEmail) return;
+
+    section.innerHTML = `
+        <div class="border-t border-gray-200 my-4"></div>
+        <div class="text-center text-gray-400 py-4">
+            <i class="fas fa-spinner fa-spin mr-2"></i>代表メモを読み込み中...
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`${SUPABASE_REST_URL}/rpc/get_admin_notes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+                p_employee_id: empId,
+                p_admin_email: adminEmail
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        renderAdminNotes(section, empId, data);
+    } catch (err) {
+        if (typeof debugLog === 'function') debugLog('代表メモ取得エラー:', err);
+        section.innerHTML = `
+            <div class="border-t border-gray-200 my-4"></div>
+            <div class="text-center text-red-400 py-2 text-sm">
+                <i class="fas fa-exclamation-triangle mr-1"></i>代表メモの読み込みに失敗しました
+            </div>
+        `;
+    }
+}
+
+function renderAdminNotes(section, empId, data) {
+    const found = data?.found === true;
+    const compensation = found ? (data.compensation || '') : '';
+    const memo = found ? (data.memo || '') : '';
+    const strength = found ? (data.strength || '') : '';
+    const weakness = found ? (data.weakness || '') : '';
+
+    // XSS対策: empIdをUUID形式に制限
+    const safeEmpId = /^[a-f0-9-]+$/i.test(empId) ? empId : '';
+
+    // XSS対策: escapeHtmlで全値をサニタイズ
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => s;
+
+    section.innerHTML = `
+        <div class="border-t border-gray-200 my-4"></div>
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="font-semibold text-amber-800">
+                    <i class="fas fa-lock mr-2"></i>代表専用メモ
+                </h4>
+                <span class="text-xs text-amber-500">admin権限のみ表示</span>
+            </div>
+            <div id="adminNotesView">
+                <div class="grid grid-cols-1 gap-3 text-sm">
+                    <div>
+                        <label class="text-amber-700 font-medium">報酬単価</label>
+                        <p class="text-gray-700 mt-1">${compensation ? esc(compensation) : '<span class="text-gray-400">未入力</span>'}</p>
+                    </div>
+                    <div>
+                        <label class="text-amber-700 font-medium">一言メモ</label>
+                        <p class="text-gray-700 mt-1 whitespace-pre-wrap">${memo ? esc(memo) : '<span class="text-gray-400">未入力</span>'}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-amber-700 font-medium">強み</label>
+                            <p class="text-gray-700 mt-1 whitespace-pre-wrap">${strength ? esc(strength) : '<span class="text-gray-400">未入力</span>'}</p>
+                        </div>
+                        <div>
+                            <label class="text-amber-700 font-medium">弱み</label>
+                            <p class="text-gray-700 mt-1 whitespace-pre-wrap">${weakness ? esc(weakness) : '<span class="text-gray-400">未入力</span>'}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 text-right">
+                    <button onclick="toggleAdminNotesEdit()" class="text-amber-600 hover:text-amber-800 text-sm font-medium">
+                        <i class="fas fa-edit mr-1"></i>編集
+                    </button>
+                </div>
+            </div>
+            <div id="adminNotesEdit" class="hidden">
+                <div class="grid grid-cols-1 gap-3 text-sm">
+                    <div>
+                        <label class="text-amber-700 font-medium">報酬単価</label>
+                        <input type="text" id="adminNoteCompensation" value="${esc(compensation)}"
+                               class="w-full mt-1 px-3 py-2 border border-amber-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                               placeholder="例: 月額50万円" maxlength="100">
+                    </div>
+                    <div>
+                        <label class="text-amber-700 font-medium">一言メモ</label>
+                        <textarea id="adminNoteMemo" rows="2"
+                                  class="w-full mt-1 px-3 py-2 border border-amber-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                                  placeholder="この人について一言" maxlength="1000">${esc(memo)}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-amber-700 font-medium">強み</label>
+                            <textarea id="adminNoteStrength" rows="2"
+                                      class="w-full mt-1 px-3 py-2 border border-amber-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                                      placeholder="強み・得意なこと" maxlength="500">${esc(strength)}</textarea>
+                        </div>
+                        <div>
+                            <label class="text-amber-700 font-medium">弱み</label>
+                            <textarea id="adminNoteWeakness" rows="2"
+                                      class="w-full mt-1 px-3 py-2 border border-amber-300 rounded-md focus:ring-amber-500 focus:border-amber-500"
+                                      placeholder="弱み・課題" maxlength="500">${esc(weakness)}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3 flex gap-2 justify-end">
+                    <button onclick="toggleAdminNotesEdit()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+                        キャンセル
+                    </button>
+                    <button id="adminNotesSaveBtn" onclick="saveAdminNotes('${safeEmpId}')" class="px-4 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-md font-medium">
+                        <i class="fas fa-save mr-1"></i>保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function toggleAdminNotesEdit() {
+    const viewDiv = document.getElementById('adminNotesView');
+    const editDiv = document.getElementById('adminNotesEdit');
+    if (viewDiv && editDiv) {
+        viewDiv.classList.toggle('hidden');
+        editDiv.classList.toggle('hidden');
+    }
+}
+
+async function saveAdminNotes(empId) {
+    const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const adminEmail = currentUser?.email;
+    if (!adminEmail) return;
+
+    // 保存ボタン無効化（二重送信防止）
+    const saveBtn = document.getElementById('adminNotesSaveBtn');
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>保存中...';
+    }
+
+    const compensation = document.getElementById('adminNoteCompensation')?.value?.trim() || null;
+    const memo = document.getElementById('adminNoteMemo')?.value?.trim() || null;
+    const strength = document.getElementById('adminNoteStrength')?.value?.trim() || null;
+    const weakness = document.getElementById('adminNoteWeakness')?.value?.trim() || null;
+
+    try {
+        const response = await fetch(`${SUPABASE_REST_URL}/rpc/upsert_admin_notes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+                p_employee_id: empId,
+                p_admin_email: adminEmail,
+                p_compensation: compensation,
+                p_memo: memo,
+                p_strength: strength,
+                p_weakness: weakness
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        if (typeof showNotification === 'function') {
+            showNotification('代表メモを保存しました', 'success');
+        }
+
+        // 保存後にビューモードで再読み込み
+        await loadAdminNotes(empId);
+    } catch (err) {
+        if (typeof debugLog === 'function') debugLog('代表メモ保存エラー:', err);
+        if (typeof showNotification === 'function') {
+            showNotification('代表メモの保存に失敗しました', 'error');
+        }
+        // エラー時はボタンを復元
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i>保存';
+        }
+    }
 }
 
 function editEmployeeFromDetail() {
