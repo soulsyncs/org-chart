@@ -81,7 +81,8 @@ async function syncToSoulKun() {
                 roleId: roleId,
                 isPrimary: true,
                 startDate: e.hire_date || null,
-                endDate: e.resignation_date || null
+                endDate: e.resignation_date || null,
+                chatworkAccountId: e.chatwork_account_id || null
             };
         });
 
